@@ -34,8 +34,16 @@ export async function executeAction(
 		const data = await res.json();
 
 		if (data.error) {
-			addToast(data.error, 'error');
-			return data;
+			// Parse nested JSON error messages from skill output
+			let errMsg = data.error;
+			try {
+				const parsed = JSON.parse(errMsg);
+				errMsg = parsed.message ?? parsed.error ?? errMsg;
+			} catch {
+				// Not JSON, use as-is
+			}
+			addToast(errMsg, 'error');
+			return { ...data, error: errMsg };
 		}
 
 		return data;
@@ -73,9 +81,15 @@ export async function fetchEntityData(
 		const data = await res.json();
 		if (data.error) return null;
 
-		// ERPClaw convention: list actions return { data: [...] } or an array
+		// ERPClaw convention: list actions return { data: [...] } or { entityName: [...] } or an array
 		if (Array.isArray(data.data)) return data.data;
 		if (Array.isArray(data)) return data;
+
+		// Check for entity-named keys (e.g. { customers: [...], total_count: 13 })
+		for (const value of Object.values(data)) {
+			if (Array.isArray(value) && value.length > 0) return value;
+		}
+
 		return null;
 	} catch {
 		return null; // API unavailable, fall back to mock
