@@ -79,7 +79,7 @@
 
 {#if open}
 	<aside
-		class="flex h-full w-80 flex-col border-l border-border bg-surface"
+		class="flex h-full w-full flex-col border-l border-border bg-surface sm:w-80"
 		role="complementary"
 		aria-label="Chat assistant"
 		transition:fly={{ x: 320, duration: 200 }}

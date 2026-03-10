@@ -107,7 +107,7 @@
 					<p class="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
 						{section.label}
 					</p>
-					<div class="grid grid-cols-2 gap-3">
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						{#each section.fields as field}
 							{@const col = entityDef.columns.find((c) => c.field === field)}
 							<div>
@@ -122,7 +122,7 @@
 			<!-- Auto-generate from columns -->
 			<div class="rounded-xl border border-border p-4">
 				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-muted">Details</p>
-				<div class="grid grid-cols-2 gap-3">
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					{#each entityDef.columns as col}
 						{#if col.format !== 'status_badge'}
 							<div>
