@@ -26,12 +26,31 @@
 	}
 
 	function statusColor(value: unknown): string | undefined {
-		return entityDef.statusColors?.[String(value)];
+		const v = String(value);
+		return entityDef.statusColors?.[v] ?? entityDef.statusColors?.[v.toLowerCase()];
+	}
+
+	function formatStatus(value: unknown): string {
+		const v = String(value ?? '');
+		return v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
 	function actionLabel(action: string): string {
 		return action.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
+
+	// Determine which actions are relevant for the current record's status
+	let currentStatus = $derived(statusField ? String(record[statusField.field] ?? '').toLowerCase() : '');
+	let visibleActions = $derived.by(() => {
+		const actions = entityDef.actions ?? [];
+		if (!currentStatus || actions.length === 0) return actions;
+		// Hide submit for already-submitted/confirmed/invoiced records
+		return actions.filter((a) => {
+			if (a.startsWith('submit-') && ['submitted', 'confirmed', 'fully_invoiced', 'cancelled', 'paid'].includes(currentStatus)) return false;
+			if (a.startsWith('cancel-') && ['cancelled', 'draft'].includes(currentStatus)) return false;
+			return true;
+		});
+	});
 
 	// Derive display fields from columns
 	let primaryField = $derived(entityDef.columns.find((c) => c.primary)?.field ?? entityDef.columns[0]?.field);
@@ -55,7 +74,7 @@
 					style:background="{statusColor(record[statusField.field])}20"
 					style:color={statusColor(record[statusField.field])}
 				>
-					{record[statusField.field]}
+					{formatStatus(record[statusField.field])}
 				</span>
 			{/if}
 		</div>
@@ -81,9 +100,9 @@
 	</div>
 
 	<!-- Actions -->
-	{#if entityDef.actions?.length}
+	{#if visibleActions.length > 0}
 		<div class="flex flex-wrap gap-2 border-b border-border p-4">
-			{#each entityDef.actions as action}
+			{#each visibleActions as action}
 				<button
 					class="cursor-pointer rounded-md border border-border px-3 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={actionLoading === action}

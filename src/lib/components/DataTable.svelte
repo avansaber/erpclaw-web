@@ -9,7 +9,11 @@
 		filterField = 'status',
 		statusColors = {},
 		onRowClick,
-		selectedRow = null
+		selectedRow = null,
+		totalCount = 0,
+		hasMore = false,
+		loadingMore = false,
+		onLoadMore
 	}: {
 		columns: ColumnDef[];
 		data: Record<string, unknown>[];
@@ -18,6 +22,10 @@
 		statusColors?: Record<string, string>;
 		onRowClick?: (row: Record<string, unknown>) => void;
 		selectedRow?: Record<string, unknown> | null;
+		totalCount?: number;
+		hasMore?: boolean;
+		loadingMore?: boolean;
+		onLoadMore?: () => void;
 	} = $props();
 
 	let activeFilter = $state('All');
@@ -184,11 +192,22 @@
 		</table>
 	</div>
 
-	<!-- Record count -->
-	<p class="mt-2 text-xs text-muted" aria-live="polite">
-		Showing {filtered.length} of {data.length} records
-		{#if activeFilter !== 'All'} · Filtered: {activeFilter}{/if}
-	</p>
+	<!-- Load more + record count -->
+	<div class="mt-2 flex items-center justify-between">
+		<p class="text-xs text-muted" aria-live="polite">
+			Showing {filtered.length} of {totalCount || data.length} records
+			{#if activeFilter !== 'All'} · Filtered: {activeFilter}{/if}
+		</p>
+		{#if hasMore && onLoadMore}
+			<button
+				class="cursor-pointer rounded-md border border-border px-3 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+				disabled={loadingMore}
+				onclick={onLoadMore}
+			>
+				{loadingMore ? 'Loading...' : 'Load More'}
+			</button>
+		{/if}
+	</div>
 </div>
 
 <style>

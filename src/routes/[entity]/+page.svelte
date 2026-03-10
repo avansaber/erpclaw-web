@@ -5,6 +5,7 @@
 	import { page } from '$app/stores';
 	import { fly } from 'svelte/transition';
 	import { fetchEntityData, executeAction, skillForAction } from '$lib/api';
+	import type { FetchResult } from '$lib/api';
 	import { addToast } from '$lib/toast';
 	import { isLoading as authLoading } from '$lib/auth';
 	import { onWSEvent } from '$lib/websocket';
@@ -16,6 +17,9 @@
 
 	let liveData = $state<Record<string, unknown>[] | null>(null);
 	let loadingData = $state(false);
+	let loadingMore = $state(false);
+	let totalCount = $state(0);
+	let hasMore = $state(false);
 	let selectedRow = $state<Record<string, unknown> | null>(null);
 	let actionLoading = $state<string | null>(null);
 
@@ -43,13 +47,29 @@
 	async function loadLiveData() {
 		if (!entityKey) return;
 		loadingData = true;
-		const data = await fetchEntityData('erpclaw', entityKey);
-		if (data) {
-			liveData = data;
+		const result = await fetchEntityData('erpclaw', entityKey);
+		if (result) {
+			liveData = result.rows;
+			totalCount = result.totalCount;
+			hasMore = result.hasMore;
 		} else {
 			liveData = null; // Fall back to mock
+			totalCount = 0;
+			hasMore = false;
 		}
 		loadingData = false;
+	}
+
+	async function handleLoadMore() {
+		if (!entityKey || !liveData) return;
+		loadingMore = true;
+		const result = await fetchEntityData('erpclaw', entityKey, { offset: liveData.length });
+		if (result) {
+			liveData = [...liveData, ...result.rows];
+			totalCount = result.totalCount;
+			hasMore = result.hasMore;
+		}
+		loadingMore = false;
 	}
 
 	function handleRowClick(row: Record<string, unknown>) {
@@ -98,7 +118,7 @@
 							{#if loadingData}
 								Loading...
 							{:else}
-								{entityData.length} records
+								{totalCount || entityData.length} records
 								{#if liveData}<span class="text-emerald">(live)</span>{/if}
 							{/if}
 						</p>
@@ -121,6 +141,10 @@
 						statusColors={entityDef.statusColors ?? {}}
 						onRowClick={handleRowClick}
 						selectedRow={selectedRow}
+						{totalCount}
+						{hasMore}
+						{loadingMore}
+						onLoadMore={handleLoadMore}
 					/>
 				{:else if !loadingData}
 					<div class="flex flex-col items-center justify-center rounded-xl border border-border py-16 text-center">
@@ -151,6 +175,7 @@
 					panel={true}
 					onClose={() => (selectedRow = null)}
 					onAction={handleAction}
+					{actionLoading}
 				/>
 			</div>
 		{/if}

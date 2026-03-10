@@ -25,6 +25,14 @@
 		return path.split('/')[1] ?? '';
 	});
 
+	// Human-readable label for breadcrumb
+	let activeEntityLabel = $derived(() => {
+		const key = activeEntity();
+		if (!key) return '';
+		const def = $layout.entities[key];
+		return def?.labelPlural ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+	});
+
 	// Public routes that don't need auth
 	let isPublicRoute = $derived(
 		$page.url.pathname === '/login' || $page.url.pathname === '/setup'
@@ -137,7 +145,7 @@
 					<a href="/" class="text-sm font-bold text-accent">ERPClaw</a>
 					{#if activeEntity()}
 						<span class="text-muted">/</span>
-						<span class="text-sm capitalize">{activeEntity()}</span>
+						<span class="text-sm">{activeEntityLabel()}</span>
 					{/if}
 				</div>
 				<div class="flex items-center gap-2">

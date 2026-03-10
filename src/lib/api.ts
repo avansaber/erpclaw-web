@@ -151,9 +151,14 @@ function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<s
 			}
 		}
 
-		// Second pass: naming_series should always win over raw id for display
-		if (row.naming_series && fieldMap.naming_series === 'id') {
-			mapped.id = row.naming_series;
+		// Second pass: naming_series should always win over raw id for display.
+		// If naming_series is empty (draft), show "DRAFT-xxxx" prefix from UUID.
+		if (fieldMap.naming_series === 'id') {
+			if (row.naming_series) {
+				mapped.id = row.naming_series;
+			} else if (row.id) {
+				mapped.id = `DRAFT-${String(row.id).slice(0, 8)}`;
+			}
 		}
 
 		// Third pass: prefer human-readable name fields over UUIDs
@@ -170,6 +175,12 @@ function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<s
 	});
 }
 
+export interface FetchResult {
+	rows: Record<string, unknown>[];
+	totalCount: number;
+	hasMore: boolean;
+}
+
 /**
  * Fetch list data for an entity.
  * Tries the API first, returns null if unavailable (caller falls back to mock).
@@ -177,13 +188,15 @@ function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<s
 export async function fetchEntityData(
 	skill: string,
 	entityKey: string,
-	filters?: Record<string, string>
-): Promise<Record<string, unknown>[] | null> {
+	options?: { filters?: Record<string, string>; offset?: number; limit?: number }
+): Promise<FetchResult | null> {
 	const action = `list-${entityKey.replace(/_/g, '-')}s`;
 	const params: Record<string, unknown> = {};
-	if (filters) {
-		Object.assign(params, filters);
+	if (options?.filters) {
+		Object.assign(params, options.filters);
 	}
+	if (options?.offset) params.offset = options.offset;
+	if (options?.limit) params.limit = options.limit;
 
 	try {
 		const res = await auth.apiFetch(`/api/action/${skill}/${action}`, {
@@ -214,7 +227,11 @@ export async function fetchEntityData(
 		if (!rows) return null;
 
 		// Map field names from erpclaw schema to frontend columns
-		return mapFields(entityKey, rows);
+		return {
+			rows: mapFields(entityKey, rows),
+			totalCount: Number(data.total_count ?? rows.length),
+			hasMore: Boolean(data.has_more ?? false)
+		};
 	} catch {
 		return null; // API unavailable, fall back to mock
 	}
