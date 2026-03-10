@@ -135,6 +135,7 @@
 				</div>
 
 				{#if entityData.length > 0}
+					{#key entityKey}
 					<DataTable
 						columns={entityDef.columns}
 						data={entityData}
@@ -148,6 +149,7 @@
 						{loadingMore}
 						onLoadMore={handleLoadMore}
 					/>
+					{/key}
 				{:else if !loadingData}
 					<div class="flex flex-col items-center justify-center rounded-xl border border-border py-16 text-center">
 						<p class="text-4xl">&#x1F4ED;</p>
