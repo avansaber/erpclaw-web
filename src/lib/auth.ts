@@ -29,6 +29,9 @@ const state = writable<AuthState>({
 	setupRequired: null
 });
 
+// Deduplicates concurrent refresh() calls — only one in-flight at a time
+let refreshPromise: Promise<boolean> | null = null;
+
 export const auth = {
 	subscribe: state.subscribe,
 
@@ -84,8 +87,21 @@ export const auth = {
 		}
 	},
 
-	/** Try to restore session from refresh cookie */
+	/** Try to restore session from refresh cookie (deduplicated) */
 	async refresh(): Promise<boolean> {
+		// If a refresh is already in-flight, reuse its result
+		if (refreshPromise) return refreshPromise;
+
+		refreshPromise = auth._doRefresh();
+		try {
+			return await refreshPromise;
+		} finally {
+			refreshPromise = null;
+		}
+	},
+
+	/** Internal refresh implementation */
+	async _doRefresh(): Promise<boolean> {
 		try {
 			const res = await fetch('/api/auth/refresh', {
 				method: 'POST',
@@ -140,6 +156,12 @@ export const auth = {
 		let token: string | null = null;
 		state.subscribe((s) => (token = s.accessToken))();
 
+		// If no token yet, wait for any in-flight refresh before proceeding
+		if (!token && refreshPromise) {
+			await refreshPromise;
+			state.subscribe((s) => (token = s.accessToken))();
+		}
+
 		const headers = new Headers(init?.headers);
 		if (token) {
 			headers.set('Authorization', `Bearer ${token}`);
@@ -147,7 +169,7 @@ export const auth = {
 
 		let res = await fetch(url, { ...init, headers, credentials: 'include' });
 
-		// If 401, try refreshing the token once (even if token was null — handles full page reload race)
+		// If 401, try refreshing the token once
 		if (res.status === 401) {
 			const refreshed = await auth.refresh();
 			if (refreshed) {
