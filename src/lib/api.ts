@@ -55,6 +55,86 @@ export async function executeAction(
 }
 
 /**
+ * Field mappings: erpclaw response field → frontend column field.
+ * Maps real DB column names to what the DataTable/mock data expects.
+ */
+const FIELD_MAPS: Record<string, Record<string, string>> = {
+	customer: {
+		customer_type: 'type',
+		credit_limit: 'balance'
+	},
+	supplier: {
+		supplier_type: 'type'
+	},
+	sales_order: {
+		naming_series: 'id',
+		customer_id: 'customer',
+		order_date: 'date',
+		grand_total: 'total',
+		delivery_date: 'deliveryDate'
+	},
+	sales_invoice: {
+		naming_series: 'id',
+		customer_id: 'customer',
+		posting_date: 'date',
+		grand_total: 'total',
+		outstanding_amount: 'outstanding'
+	},
+	purchase_order: {
+		naming_series: 'id',
+		supplier_name: 'supplier',
+		order_date: 'date',
+		grand_total: 'total'
+	},
+	item: {
+		item_name: 'name',
+		item_group_id: 'group',
+		stock_uom: 'uom',
+		standard_rate: 'cost'
+	},
+	employee: {
+		naming_series: 'id',
+		full_name: 'name',
+		date_of_joining: 'joinDate',
+		employment_type: 'type',
+		department_name: 'department',
+		designation_name: 'designation'
+	},
+	account: {
+		account_number: 'number',
+		root_type: 'rootType',
+		is_group: 'isGroup'
+	},
+	warehouse: {
+		warehouse_type: 'type'
+	},
+	journal_entry: {
+		naming_series: 'id',
+		posting_date: 'date',
+		entry_type: 'type',
+		total_debit: 'debit',
+		total_credit: 'credit'
+	}
+};
+
+function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<string, unknown>[] {
+	const fieldMap = FIELD_MAPS[entityKey];
+	if (!fieldMap) return rows;
+
+	return rows.map((row) => {
+		const mapped: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(row)) {
+			const mappedKey = fieldMap[key] ?? key;
+			// Don't overwrite if the mapped key already has a value from a prior field
+			if (!(mappedKey in mapped)) {
+				mapped[mappedKey] = value;
+			}
+		}
+		return mapped;
+	});
+}
+
+/**
  * Fetch list data for an entity.
  * Tries the API first, returns null if unavailable (caller falls back to mock).
  */
@@ -81,16 +161,24 @@ export async function fetchEntityData(
 		const data = await res.json();
 		if (data.error) return null;
 
-		// ERPClaw convention: list actions return { data: [...] } or { entityName: [...] } or an array
-		if (Array.isArray(data.data)) return data.data;
-		if (Array.isArray(data)) return data;
-
-		// Check for entity-named keys (e.g. { customers: [...], total_count: 13 })
-		for (const value of Object.values(data)) {
-			if (Array.isArray(value) && value.length > 0) return value;
+		// Extract array from response
+		let rows: Record<string, unknown>[] | null = null;
+		if (Array.isArray(data.data)) rows = data.data;
+		else if (Array.isArray(data)) rows = data;
+		else {
+			// Check for entity-named keys (e.g. { customers: [...], total_count: 13 })
+			for (const value of Object.values(data)) {
+				if (Array.isArray(value) && value.length > 0) {
+					rows = value as Record<string, unknown>[];
+					break;
+				}
+			}
 		}
 
-		return null;
+		if (!rows) return null;
+
+		// Map field names from erpclaw schema to frontend columns
+		return mapFields(entityKey, rows);
 	} catch {
 		return null; // API unavailable, fall back to mock
 	}
