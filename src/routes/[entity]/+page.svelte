@@ -4,9 +4,9 @@
 	import { layout } from '$lib/stores';
 	import { page } from '$app/stores';
 	import { fly } from 'svelte/transition';
-	import { onMount } from 'svelte';
 	import { fetchEntityData, executeAction, skillForAction } from '$lib/api';
 	import { addToast } from '$lib/toast';
+	import { isLoading as authLoading } from '$lib/auth';
 	import { onWSEvent } from '$lib/websocket';
 	import { onDestroy } from 'svelte';
 
@@ -22,14 +22,10 @@
 	// Use live data if available, otherwise mock
 	let entityData = $derived(liveData ?? mockData);
 
-	// Fetch live data on mount and when entity changes
-	onMount(() => {
-		loadLiveData();
-	});
-
+	// Fetch live data when entity changes AND auth is ready
+	// (Must wait for auth.refresh() in root layout before calling API)
 	$effect(() => {
-		// Re-fetch when entity key changes
-		if (entityKey) {
+		if (entityKey && !$authLoading) {
 			selectedRow = null;
 			loadLiveData();
 		}
