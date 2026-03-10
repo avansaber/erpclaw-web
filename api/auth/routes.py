@@ -156,7 +156,7 @@ def login(req: LoginRequest, request: Request, response: Response):
             secure=True,
             samesite="lax",
             max_age=7 * 24 * 60 * 60,
-            path="/api/auth",
+            path="/",
         )
 
         return {
@@ -183,7 +183,7 @@ def refresh(request: Request, response: Response):
 
     user_info = verify_refresh_token(refresh_token)
     if not user_info:
-        response.delete_cookie("refresh_token", path="/api/auth")
+        response.delete_cookie("refresh_token", path="/")
         return {"error": "Invalid or expired refresh token"}
 
     # Rotate: revoke old, create new
@@ -204,7 +204,7 @@ def refresh(request: Request, response: Response):
         secure=True,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,
-        path="/api/auth",
+        path="/",
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
@@ -216,7 +216,7 @@ def logout(request: Request, response: Response):
     refresh_token = request.cookies.get("refresh_token")
     if refresh_token:
         revoke_session(refresh_token)
-    response.delete_cookie("refresh_token", path="/api/auth")
+    response.delete_cookie("refresh_token", path="/")
     return {"message": "Logged out"}
 
 
