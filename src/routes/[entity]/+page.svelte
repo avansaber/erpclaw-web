@@ -7,7 +7,7 @@
 	import { fetchEntityData, executeAction, skillForAction } from '$lib/api';
 	import type { FetchResult } from '$lib/api';
 	import { addToast } from '$lib/toast';
-	import { isLoading as authLoading } from '$lib/auth';
+	import { isLoading as authLoading, isAuthenticated } from '$lib/auth';
 	import { onWSEvent } from '$lib/websocket';
 	import { onDestroy } from 'svelte';
 
@@ -26,10 +26,10 @@
 	// Use live data if available, otherwise mock
 	let entityData = $derived(liveData ?? mockData);
 
-	// Fetch live data when entity changes AND auth is ready
-	// (Must wait for auth.refresh() in root layout before calling API)
+	// Fetch live data when entity changes AND auth is fully ready
+	// (Must wait for auth.refresh() in root layout to complete — both loading=false AND user set)
 	$effect(() => {
-		if (entityKey && !$authLoading) {
+		if (entityKey && !$authLoading && $isAuthenticated) {
 			selectedRow = null;
 			loadLiveData();
 		}
