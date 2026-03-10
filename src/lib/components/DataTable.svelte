@@ -26,7 +26,7 @@
 	let filtered = $derived(
 		activeFilter === 'All'
 			? data
-			: data.filter((r) => r[filterField] === activeFilter)
+			: data.filter((r) => String(r[filterField] ?? '').toLowerCase() === activeFilter.toLowerCase())
 	);
 
 	function formatCell(value: unknown, col: ColumnDef): string {
@@ -38,7 +38,13 @@
 	}
 
 	function statusColor(value: unknown): string | undefined {
-		return statusColors[String(value)];
+		const v = String(value);
+		return statusColors[v] ?? statusColors[v.toLowerCase()];
+	}
+
+	function formatStatus(value: unknown): string {
+		const v = String(value ?? '');
+		return v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
 	function isSelected(row: Record<string, unknown>): boolean {
@@ -165,7 +171,7 @@
 										style:background="{statusColor(row[col.field])}20"
 										style:color={statusColor(row[col.field])}
 									>
-										{row[col.field]}
+										{formatStatus(row[col.field])}
 									</span>
 								{:else}
 									{formatCell(row[col.field], col)}
