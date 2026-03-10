@@ -47,7 +47,9 @@
 	async function loadLiveData() {
 		if (!entityKey) return;
 		loadingData = true;
-		const result = await fetchEntityData('erpclaw', entityKey);
+		// Fetch up to 200 initially so client-side filters work on the full dataset.
+		// Load More handles any overflow beyond 200.
+		const result = await fetchEntityData('erpclaw', entityKey, { limit: 200 });
 		if (result) {
 			liveData = result.rows;
 			totalCount = result.totalCount;
