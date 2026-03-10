@@ -14,6 +14,7 @@ PUBLIC_ROUTES = {
     "/api/auth/refresh",
     "/api/health",
     "/api/layout/verticals",
+    "/ws",
     "/docs",
     "/openapi.json",
     "/redoc",

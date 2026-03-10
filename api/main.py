@@ -13,6 +13,8 @@ from auth.middleware import AuthMiddleware
 from auth.routes import router as auth_router
 from skills.routes import router as skills_router
 from layout import router as layout_router
+from chat import router as chat_router
+from ws import router as ws_router
 from init_db import init_web_db
 
 # Initialize database on startup
@@ -46,6 +48,8 @@ app.add_middleware(AuthMiddleware)
 app.include_router(auth_router)
 app.include_router(layout_router)
 app.include_router(skills_router)
+app.include_router(chat_router)
+app.include_router(ws_router)
 
 
 @app.get("/api/health")

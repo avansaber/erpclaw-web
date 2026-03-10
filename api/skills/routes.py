@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from db import get_web_db
 from skills.executor import execute_action
+from ws import notify_action, notify_data_change
 
 router = APIRouter(prefix="/api/action", tags=["actions"])
 
@@ -79,5 +80,14 @@ async def run_action(skill: str, action: str, body: ActionRequest, request: Requ
         conn.commit()
     finally:
         conn.close()
+
+    # Broadcast WebSocket notification
+    success = "error" not in result
+    await notify_action(skill, action, success)
+    if success and any(action.startswith(p) for p in ("add-", "create-", "update-", "submit-", "cancel-", "delete-")):
+        # Extract entity from action name (e.g., add-customer → customer)
+        entity = action.split("-", 1)[1] if "-" in action else action
+        change_type = action.split("-", 1)[0] if "-" in action else "update"
+        await notify_data_change(entity, change_type)
 
     return result

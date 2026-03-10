@@ -106,6 +106,9 @@ export interface SearchResult {
 export interface ChatMessage {
 	role: 'user' | 'assistant';
 	content: string;
+	href?: string;
+	action?: { skill: string; action: string; params: Record<string, unknown> };
+	suggestions?: string[];
 }
 
 // ── Vertical Layout ──

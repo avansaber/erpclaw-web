@@ -1,17 +1,30 @@
 <script lang="ts">
 	import type { ChatMessage } from '$lib/types';
-	import { layout } from '$lib/stores';
+	import { auth } from '$lib/auth';
 	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
+	import { executeAction } from '$lib/api';
+	import { addToast } from '$lib/toast';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
 	let messages = $state<ChatMessage[]>([
-		{ role: 'assistant', content: "Hi! I can help you navigate, create records, or find information. Try asking me something." }
+		{
+			role: 'assistant',
+			content:
+				"Hi! I can help you navigate, create records, query data, or execute actions. Try asking me something.",
+			suggestions: [
+				'Show me customers',
+				'How many overdue invoices?',
+				'New sales order',
+				'Total revenue this month'
+			]
+		}
 	]);
 	let input = $state('');
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let messagesEl = $state<HTMLDivElement | null>(null);
+	let sending = $state(false);
 
 	$effect(() => {
 		if (open) requestAnimationFrame(() => inputEl?.focus());
@@ -23,48 +36,75 @@
 		});
 	}
 
-	function handleSend() {
-		const q = input.trim();
-		if (!q) return;
+	async function handleSend(text?: string) {
+		const q = (text ?? input).trim();
+		if (!q || sending) return;
 
 		messages.push({ role: 'user', content: q });
 		input = '';
+		sending = true;
 		scrollToBottom();
 
-		// Mock AI responses based on keywords
-		setTimeout(() => {
-			const lower = q.toLowerCase();
-			const l = $layout;
-			let response = "I'm not sure about that. Try asking about specific entities like customers, invoices, or patients.";
+		try {
+			const res = await auth.apiFetch('/api/chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ message: q, vertical: 'erpclaw' })
+			});
 
-			// Check for entity navigation
-			for (const group of l.sidebar) {
-				for (const item of group.items) {
-					if (lower.includes(item.label.toLowerCase()) || lower.includes(item.labelPlural.toLowerCase())) {
-						if (lower.includes('new') || lower.includes('create') || lower.includes('add')) {
-							response = `Opening the new ${item.label} form...`;
-							setTimeout(() => goto(`/${item.key}/new`), 500);
-						} else {
-							response = `Opening ${item.labelPlural}...`;
-							setTimeout(() => goto(`/${item.key}`), 500);
-						}
-						break;
-					}
-				}
-			}
+			const data = await res.json();
 
-			if (lower.includes('dashboard') || lower.includes('home')) {
-				response = 'Taking you to the dashboard...';
-				setTimeout(() => goto('/'), 500);
-			} else if (lower.includes('overdue') || lower.includes('attention')) {
-				response = `You have ${l.attention.length} items needing attention. Check the dashboard for details.`;
-			} else if (lower.includes('help')) {
-				response = 'I can help you:\n• Navigate: "show me customers"\n• Create: "new invoice"\n• Search: "find overdue invoices"\n• Go home: "dashboard"';
-			}
-
-			messages.push({ role: 'assistant', content: response });
+			const msg: ChatMessage = {
+				role: 'assistant',
+				content: data.message ?? 'Something went wrong.',
+				href: data.href,
+				action: data.action,
+				suggestions: data.suggestions
+			};
+			messages.push(msg);
 			scrollToBottom();
-		}, 400);
+
+			// Auto-navigate after a short delay
+			if (data.type === 'navigate' && data.href) {
+				setTimeout(() => goto(data.href), 600);
+			}
+		} catch {
+			messages.push({
+				role: 'assistant',
+				content: "Sorry, I couldn't reach the server. Try again in a moment."
+			});
+			scrollToBottom();
+		} finally {
+			sending = false;
+		}
+	}
+
+	async function handleActionConfirm(action: {
+		skill: string;
+		action: string;
+		params: Record<string, unknown>;
+	}) {
+		messages.push({ role: 'user', content: 'Yes, go ahead.' });
+		sending = true;
+		scrollToBottom();
+
+		const result = await executeAction(action.skill, action.action, action.params);
+
+		if (result.error) {
+			messages.push({ role: 'assistant', content: `Action failed: ${result.error}` });
+		} else {
+			const label = action.action
+				.replace(/-/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase());
+			messages.push({
+				role: 'assistant',
+				content: `Done! ${label} completed successfully.`
+			});
+			addToast(`${label} completed`, 'success');
+		}
+
+		sending = false;
+		scrollToBottom();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -104,14 +144,70 @@
 			{#each messages as msg}
 				<div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}">
 					<div
-						class="max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-line {msg.role === 'user'
+						class="max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-line {msg.role ===
+						'user'
 							? 'bg-accent/20 text-text'
 							: 'bg-card text-text'}"
 					>
-						{msg.content}
+						<!-- Render markdown bold -->
+						{@html msg.content
+							.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;')
+							.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+							.replace(/\n/g, '<br>')}
 					</div>
 				</div>
+
+				<!-- Action confirmation button -->
+				{#if msg.role === 'assistant' && msg.action}
+					<div class="flex justify-start">
+						<button
+							class="cursor-pointer rounded-lg border border-accent px-3 py-1.5 text-xs text-accent transition-colors hover:bg-accent/10"
+							onclick={() => msg.action && handleActionConfirm(msg.action)}
+							disabled={sending}
+						>
+							{sending ? 'Executing...' : 'Confirm & Execute'}
+						</button>
+					</div>
+				{/if}
+
+				<!-- Navigation link -->
+				{#if msg.role === 'assistant' && msg.href && !msg.action}
+					<div class="flex justify-start">
+						<a
+							href={msg.href}
+							class="text-xs text-accent hover:underline"
+							onclick={() => (open = false)}
+						>
+							Open →
+						</a>
+					</div>
+				{/if}
+
+				<!-- Suggestion chips -->
+				{#if msg.role === 'assistant' && msg.suggestions?.length}
+					<div class="flex flex-wrap gap-1.5">
+						{#each msg.suggestions as suggestion}
+							<button
+								class="cursor-pointer rounded-full border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+								onclick={() => handleSend(suggestion)}
+								disabled={sending}
+							>
+								{suggestion}
+							</button>
+						{/each}
+					</div>
+				{/if}
 			{/each}
+
+			{#if sending}
+				<div class="flex justify-start">
+					<div class="rounded-lg bg-card px-3 py-2 text-sm text-muted">
+						Thinking...
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Input -->
@@ -124,11 +220,13 @@
 					placeholder="Ask anything..."
 					class="flex-1 rounded-lg border border-border bg-bg p-2 text-sm text-text outline-none placeholder:text-muted focus:border-accent"
 					aria-label="Chat message"
+					disabled={sending}
 				/>
 				<button
-					class="cursor-pointer rounded-lg bg-accent px-3 py-2 text-sm text-white transition-all hover:brightness-110"
-					onclick={handleSend}
+					class="cursor-pointer rounded-lg bg-accent px-3 py-2 text-sm text-white transition-all hover:brightness-110 disabled:opacity-50"
+					onclick={() => handleSend()}
 					aria-label="Send message"
+					disabled={sending}
 				>
 					↑
 				</button>

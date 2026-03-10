@@ -6,9 +6,10 @@
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { layout, loadVerticals } from '$lib/stores';
 	import { auth, user, isAuthenticated, isLoading } from '$lib/auth';
+	import { connectWS, disconnectWS } from '$lib/websocket';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	let { children } = $props();
 
@@ -54,8 +55,15 @@
 
 			// Load verticals from API
 			await loadVerticals();
+
+			// Connect WebSocket for real-time updates
+			connectWS();
 		}
 		// If API not available, mock mode — no auth needed
+	});
+
+	onDestroy(() => {
+		disconnectWS();
 	});
 
 	function handleGlobalKeydown(e: KeyboardEvent) {
@@ -73,6 +81,7 @@
 
 	async function handleLogout() {
 		userMenuOpen = false;
+		disconnectWS();
 		await auth.logout();
 		goto('/login');
 	}

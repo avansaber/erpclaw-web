@@ -7,6 +7,8 @@
 	import { onMount } from 'svelte';
 	import { fetchEntityData, executeAction, skillForAction } from '$lib/api';
 	import { addToast } from '$lib/toast';
+	import { onWSEvent } from '$lib/websocket';
+	import { onDestroy } from 'svelte';
 
 	let entityKey = $derived($page.params.entity ?? '');
 	let entityDef = $derived(entityKey ? $layout.entities[entityKey] : undefined);
@@ -32,6 +34,15 @@
 			loadLiveData();
 		}
 	});
+
+	// Auto-refresh when WebSocket notifies of data changes
+	const unsubWS = onWSEvent('data_changed', (data) => {
+		const changedEntity = String(data.entity ?? '').replace(/-/g, '_');
+		if (changedEntity === entityKey || changedEntity.includes(entityKey)) {
+			loadLiveData();
+		}
+	});
+	onDestroy(unsubWS);
 
 	async function loadLiveData() {
 		if (!entityKey) return;
