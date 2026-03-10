@@ -153,7 +153,7 @@ def login(req: LoginRequest, request: Request, response: Response):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,  # Set True in production with HTTPS
+            secure=True,
             samesite="lax",
             max_age=7 * 24 * 60 * 60,
             path="/api/auth",
@@ -201,7 +201,7 @@ def refresh(request: Request, response: Response):
         key="refresh_token",
         value=new_refresh,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,
         path="/api/auth",
