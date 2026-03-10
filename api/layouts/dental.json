@@ -1,0 +1,501 @@
+{
+	"name": "dental",
+	"label": "Dental Practice",
+	"description": "Patient management, scheduling, claims, treatment plans",
+	"icon": "🦷",
+	"color": "#10b981",
+	"kpis": [
+		{
+			"label": "Patients Today",
+			"value": "14",
+			"sub": "3 new patients",
+			"color": "#06b6d4"
+		},
+		{
+			"label": "Revenue (MTD)",
+			"value": "$38,400",
+			"sub": "+8% vs last month",
+			"color": "#10b981"
+		},
+		{
+			"label": "Pending Claims",
+			"value": "7",
+			"sub": "$12,800 pending",
+			"color": "#f59e0b"
+		},
+		{
+			"label": "Treatment Plans",
+			"value": "11",
+			"sub": "4 need scheduling",
+			"color": "#818cf8"
+		}
+	],
+	"workflows": [
+		{
+			"key": "patient_flow",
+			"label": "Patient Flow",
+			"icon": "🏥",
+			"primaryAction": "+ Check In",
+			"steps": [
+				{
+					"label": "Waiting",
+					"count": 3,
+					"countColor": "#f59e0b"
+				},
+				{
+					"label": "In Chair",
+					"count": 2,
+					"countColor": "#06b6d4"
+				},
+				{
+					"label": "Checkout",
+					"count": 1,
+					"countColor": "#10b981"
+				},
+				{
+					"label": "Done"
+				}
+			]
+		},
+		{
+			"key": "claims_pipeline",
+			"label": "Claims Pipeline",
+			"icon": "📋",
+			"primaryAction": "+ New Claim",
+			"steps": [
+				{
+					"label": "Draft",
+					"count": 3,
+					"countColor": "#64748b"
+				},
+				{
+					"label": "Submitted",
+					"count": 4,
+					"countColor": "#06b6d4"
+				},
+				{
+					"label": "Processing"
+				},
+				{
+					"label": "Paid",
+					"count": 12,
+					"countColor": "#10b981"
+				}
+			]
+		}
+	],
+	"sidebar": [
+		{
+			"label": "Patients",
+			"icon": "👤",
+			"expanded": true,
+			"items": [
+				{
+					"key": "patient",
+					"label": "Patient",
+					"labelPlural": "Patients"
+				},
+				{
+					"key": "appointment",
+					"label": "Appointment",
+					"labelPlural": "Appointments"
+				}
+			]
+		},
+		{
+			"label": "Clinical",
+			"icon": "🩺",
+			"expanded": true,
+			"items": [
+				{
+					"key": "treatment_plan",
+					"label": "Treatment Plan",
+					"labelPlural": "Treatment Plans"
+				},
+				{
+					"key": "procedure",
+					"label": "Procedure",
+					"labelPlural": "Procedures"
+				}
+			]
+		},
+		{
+			"label": "Billing",
+			"icon": "💰",
+			"expanded": false,
+			"items": [
+				{
+					"key": "claim",
+					"label": "Claim",
+					"labelPlural": "Claims"
+				},
+				{
+					"key": "copay",
+					"label": "Copay",
+					"labelPlural": "Copays"
+				}
+			]
+		}
+	],
+	"entities": {
+		"patient": {
+			"label": "Patient",
+			"labelPlural": "Patients",
+			"columns": [
+				{
+					"field": "name",
+					"label": "Name",
+					"primary": true
+				},
+				{
+					"field": "dob",
+					"label": "Date of Birth",
+					"format": "date"
+				},
+				{
+					"field": "phone",
+					"label": "Phone"
+				},
+				{
+					"field": "insurance",
+					"label": "Insurance"
+				},
+				{
+					"field": "lastVisit",
+					"label": "Last Visit",
+					"format": "date"
+				},
+				{
+					"field": "status",
+					"label": "Status",
+					"format": "status_badge"
+				}
+			],
+			"filters": [
+				"Active",
+				"Inactive",
+				"New"
+			],
+			"statusColors": {
+				"Active": "#10b981",
+				"Inactive": "#64748b",
+				"New": "#06b6d4"
+			},
+			"createForm": {
+				"action": "dental-add-patient",
+				"submitLabel": "Add Patient",
+				"sections": [
+					{
+						"label": "Patient Information",
+						"fields": [
+							{
+								"name": "first_name",
+								"label": "First Name",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "last_name",
+								"label": "Last Name",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "dob",
+								"label": "Date of Birth",
+								"type": "date",
+								"required": true
+							},
+							{
+								"name": "gender",
+								"label": "Gender",
+								"type": "select",
+								"options": [
+									"Male",
+									"Female",
+									"Other"
+								]
+							}
+						]
+					},
+					{
+						"label": "Contact",
+						"fields": [
+							{
+								"name": "phone",
+								"label": "Phone",
+								"type": "tel",
+								"required": true
+							},
+							{
+								"name": "email",
+								"label": "Email",
+								"type": "email"
+							},
+							{
+								"name": "address",
+								"label": "Address",
+								"type": "text"
+							}
+						]
+					},
+					{
+						"label": "Insurance",
+						"fields": [
+							{
+								"name": "insurance_provider",
+								"label": "Provider",
+								"type": "text"
+							},
+							{
+								"name": "policy_number",
+								"label": "Policy Number",
+								"type": "text"
+							},
+							{
+								"name": "group_number",
+								"label": "Group Number",
+								"type": "text"
+							}
+						]
+					}
+				]
+			}
+		},
+		"appointment": {
+			"label": "Appointment",
+			"labelPlural": "Appointments",
+			"columns": [
+				{
+					"field": "patient",
+					"label": "Patient",
+					"primary": true
+				},
+				{
+					"field": "date",
+					"label": "Date",
+					"format": "date"
+				},
+				{
+					"field": "time",
+					"label": "Time"
+				},
+				{
+					"field": "type",
+					"label": "Type"
+				},
+				{
+					"field": "provider",
+					"label": "Provider"
+				},
+				{
+					"field": "status",
+					"label": "Status",
+					"format": "status_badge"
+				}
+			],
+			"filters": [
+				"Scheduled",
+				"Checked In",
+				"In Progress",
+				"Complete"
+			],
+			"statusColors": {
+				"Scheduled": "#06b6d4",
+				"Checked In": "#f59e0b",
+				"In Progress": "#818cf8",
+				"Complete": "#10b981"
+			},
+			"createForm": {
+				"action": "dental-add-appointment",
+				"submitLabel": "Schedule Appointment",
+				"sections": [
+					{
+						"label": "Appointment Details",
+						"fields": [
+							{
+								"name": "patient",
+								"label": "Patient",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "date",
+								"label": "Date",
+								"type": "date",
+								"required": true
+							},
+							{
+								"name": "time",
+								"label": "Time",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "type",
+								"label": "Type",
+								"type": "select",
+								"options": [
+									"Cleaning",
+									"Exam",
+									"Filling",
+									"Crown",
+									"Root Canal",
+									"Extraction"
+								],
+								"required": true
+							},
+							{
+								"name": "provider",
+								"label": "Provider",
+								"type": "text"
+							},
+							{
+								"name": "notes",
+								"label": "Notes",
+								"type": "textarea"
+							}
+						]
+					}
+				]
+			}
+		}
+	},
+	"attention": [
+		{
+			"message": "2 insurance claims denied by Aetna — need resubmission",
+			"severity": "warning",
+			"href": "/claim"
+		},
+		{
+			"message": "1 patient recall overdue (James Wilson)",
+			"severity": "info",
+			"href": "/patient"
+		},
+		{
+			"message": "Sterilization log incomplete for Room 2",
+			"severity": "critical"
+		}
+	],
+	"activity": [
+		{
+			"message": "Emily Johnson — cleaning completed by Dr. Park",
+			"timestamp": "1h ago",
+			"icon": "🦷"
+		},
+		{
+			"message": "Sarah Davis checked in for exam",
+			"timestamp": "2h ago",
+			"icon": "📋"
+		},
+		{
+			"message": "Claim #C-4521 submitted to Delta Dental",
+			"timestamp": "3h ago",
+			"icon": "📄"
+		},
+		{
+			"message": "Robert Martinez — new patient registered",
+			"timestamp": "Today",
+			"icon": "👤"
+		},
+		{
+			"message": "Treatment plan approved for Lisa Anderson",
+			"timestamp": "Yesterday",
+			"icon": "✅"
+		}
+	],
+	"mockData": {
+		"patient": [
+			{
+				"name": "Emily Johnson",
+				"dob": "1988-04-15",
+				"phone": "(555) 234-5678",
+				"insurance": "Delta Dental",
+				"lastVisit": "2026-03-01",
+				"status": "Active"
+			},
+			{
+				"name": "Michael Brown",
+				"dob": "1975-11-22",
+				"phone": "(555) 345-6789",
+				"insurance": "MetLife",
+				"lastVisit": "2026-02-15",
+				"status": "Active"
+			},
+			{
+				"name": "Sarah Davis",
+				"dob": "1992-07-03",
+				"phone": "(555) 456-7890",
+				"insurance": "Cigna",
+				"lastVisit": "2026-03-08",
+				"status": "New"
+			},
+			{
+				"name": "James Wilson",
+				"dob": "1965-01-30",
+				"phone": "(555) 567-8901",
+				"insurance": "Aetna",
+				"lastVisit": "2025-11-20",
+				"status": "Inactive"
+			},
+			{
+				"name": "Lisa Anderson",
+				"dob": "2001-09-14",
+				"phone": "(555) 678-9012",
+				"insurance": "Delta Dental",
+				"lastVisit": "2026-03-05",
+				"status": "Active"
+			},
+			{
+				"name": "Robert Martinez",
+				"dob": "1983-12-08",
+				"phone": "(555) 789-0123",
+				"insurance": "Guardian",
+				"lastVisit": "2026-03-10",
+				"status": "New"
+			}
+		],
+		"appointment": [
+			{
+				"patient": "Emily Johnson",
+				"date": "2026-03-10",
+				"time": "9:00 AM",
+				"type": "Cleaning",
+				"provider": "Dr. Park",
+				"status": "Complete"
+			},
+			{
+				"patient": "Sarah Davis",
+				"date": "2026-03-10",
+				"time": "10:30 AM",
+				"type": "Exam",
+				"provider": "Dr. Park",
+				"status": "In Progress"
+			},
+			{
+				"patient": "Robert Martinez",
+				"date": "2026-03-10",
+				"time": "11:00 AM",
+				"type": "Filling",
+				"provider": "Dr. Lee",
+				"status": "Checked In"
+			},
+			{
+				"patient": "Lisa Anderson",
+				"date": "2026-03-10",
+				"time": "1:00 PM",
+				"type": "Crown",
+				"provider": "Dr. Park",
+				"status": "Scheduled"
+			},
+			{
+				"patient": "Michael Brown",
+				"date": "2026-03-10",
+				"time": "2:30 PM",
+				"type": "Root Canal",
+				"provider": "Dr. Lee",
+				"status": "Scheduled"
+			}
+		]
+	}
+}

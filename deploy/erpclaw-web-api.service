@@ -1,0 +1,15 @@
+[Unit]
+Description=ERPClaw Web API (FastAPI)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/erpclaw-web/api
+ExecStart=/home/ubuntu/erpclaw-web/api/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

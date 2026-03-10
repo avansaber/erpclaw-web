@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erpclaw.ai/schema/ui-yaml-v2.json",
+  "title": "ERPClaw UI.yaml v2",
+  "description": "Schema for vertical/module UI configuration. Drives the entire erpclaw-web frontend from config.",
+  "type": "object",
+  "required": ["name", "label", "description", "icon", "color", "kpis", "workflows", "sidebar", "entities", "attention", "activity"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Machine key, kebab-case (e.g. 'erpclaw', 'dental', 'property')"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name shown in vertical switcher"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Subtitle shown on dashboard"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji icon for vertical switcher"
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "Primary accent color (hex)"
+    },
+    "extends": {
+      "type": "string",
+      "description": "Parent vertical to inherit from (for sub-verticals)"
+    },
+    "kpis": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/KPIItem" }
+    },
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/WorkflowDef" }
+    },
+    "sidebar": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/SidebarGroup" }
+    },
+    "entities": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/EntityDef" }
+    },
+    "attention": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AttentionItem" }
+    },
+    "activity": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ActivityItem" }
+    },
+    "roles": {
+      "type": "object",
+      "description": "Role-based layout overrides (AURA profiles)",
+      "additionalProperties": { "$ref": "#/$defs/RoleOverride" }
+    }
+  },
+  "$defs": {
+    "KPIItem": {
+      "type": "object",
+      "required": ["label", "value", "sub", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "value": { "type": "string", "description": "Display value (e.g. '$142,800', '14', '94%')" },
+        "sub": { "type": "string", "description": "Subtitle text" },
+        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "query": { "type": "string", "description": "SQL query or action to compute live value (Phase 3)" },
+        "trend": { "type": "string", "enum": ["up", "down", "flat"], "description": "Trend indicator (Phase 5)" }
+      }
+    },
+    "WorkflowStep": {
+      "type": "object",
+      "required": ["label"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "count": { "type": "integer", "minimum": 0 },
+        "countColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "query": { "type": "string", "description": "SQL query or action to compute live count (Phase 3)" }
+      }
+    },
+    "WorkflowDef": {
+      "type": "object",
+      "required": ["key", "label", "icon", "primaryAction", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "primaryAction": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/WorkflowStep" }
+        }
+      }
+    },
+    "SidebarItem": {
+      "type": "object",
+      "required": ["key", "label", "labelPlural"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "label": { "type": "string" },
+        "labelPlural": { "type": "string" }
+      }
+    },
+    "SidebarGroup": {
+      "type": "object",
+      "required": ["label", "icon", "items", "expanded"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "expanded": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SidebarItem" }
+        }
+      }
+    },
+    "ColumnDef": {
+      "type": "object",
+      "required": ["field", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string" },
+        "label": { "type": "string" },
+        "primary": { "type": "boolean" },
+        "format": { "type": "string", "enum": ["currency", "date", "status_badge"] },
+        "align": { "type": "string", "enum": ["left", "right"] },
+        "width": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "FormField": {
+      "type": "object",
+      "required": ["name", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "email", "tel", "select", "textarea", "currency", "date", "number"] },
+        "required": { "type": "boolean" },
+        "placeholder": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "FormSection": {
+      "type": "object",
+      "required": ["label", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/FormField" }
+        }
+      }
+    },
+    "FormSpec": {
+      "type": "object",
+      "required": ["action", "submitLabel", "sections"],
+      "additionalProperties": false,
+      "properties": {
+        "action": { "type": "string" },
+        "submitLabel": { "type": "string" },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/FormSection" }
+        }
+      }
+    },
+    "DetailSection": {
+      "type": "object",
+      "required": ["label", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "fields": { "type": "array", "items": { "type": "string" } },
+        "collapsed": { "type": "boolean" }
+      }
+    },
+    "EntityDef": {
+      "type": "object",
+      "required": ["label", "labelPlural", "columns", "filters", "createForm"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "labelPlural": { "type": "string" },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ColumnDef" }
+        },
+        "filters": { "type": "array", "items": { "type": "string" } },
+        "createForm": { "$ref": "#/$defs/FormSpec" },
+        "statusColors": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+        },
+        "detailSections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DetailSection" }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "AttentionItem": {
+      "type": "object",
+      "required": ["message", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "message": { "type": "string" },
+        "severity": { "type": "string", "enum": ["critical", "warning", "info"] },
+        "href": { "type": "string" },
+        "query": { "type": "string", "description": "Query to compute attention items live (Phase 3)" }
+      }
+    },
+    "ActivityItem": {
+      "type": "object",
+      "required": ["message", "timestamp"],
+      "additionalProperties": false,
+      "properties": {
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "icon": { "type": "string" },
+        "href": { "type": "string" }
+      }
+    },
+    "RoleOverride": {
+      "type": "object",
+      "description": "Per-role overrides: hide/show sidebar items, KPIs, entities",
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "sidebar_hide": { "type": "array", "items": { "type": "string" } },
+        "entity_hide": { "type": "array", "items": { "type": "string" } },
+        "kpi_hide": { "type": "array", "items": { "type": "string" } },
+        "default_page": { "type": "string" }
+      }
+    }
+  }
+}

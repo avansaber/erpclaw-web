@@ -1,0 +1,531 @@
+{
+	"name": "property",
+	"label": "Property Management",
+	"description": "Properties, units, leases, tenants, maintenance",
+	"icon": "🏢",
+	"color": "#818cf8",
+	"kpis": [
+		{
+			"label": "Occupancy Rate",
+			"value": "94%",
+			"sub": "47 of 50 units",
+			"color": "#10b981"
+		},
+		{
+			"label": "Monthly Rent",
+			"value": "$68,500",
+			"sub": "Collected this month",
+			"color": "#06b6d4"
+		},
+		{
+			"label": "Maintenance Open",
+			"value": "8",
+			"sub": "2 urgent",
+			"color": "#f59e0b"
+		},
+		{
+			"label": "Leases Expiring",
+			"value": "3",
+			"sub": "Within 60 days",
+			"color": "#ef4444"
+		}
+	],
+	"workflows": [
+		{
+			"key": "lease_lifecycle",
+			"label": "Lease Lifecycle",
+			"icon": "📝",
+			"primaryAction": "+ New Application",
+			"steps": [
+				{
+					"label": "Application",
+					"count": 2,
+					"countColor": "#06b6d4"
+				},
+				{
+					"label": "Screening",
+					"count": 1,
+					"countColor": "#f59e0b"
+				},
+				{
+					"label": "Lease Sign"
+				},
+				{
+					"label": "Move-in"
+				},
+				{
+					"label": "Active",
+					"count": 47,
+					"countColor": "#10b981"
+				}
+			]
+		},
+		{
+			"key": "maintenance_flow",
+			"label": "Maintenance",
+			"icon": "🔧",
+			"primaryAction": "+ New Request",
+			"steps": [
+				{
+					"label": "New",
+					"count": 3,
+					"countColor": "#ef4444"
+				},
+				{
+					"label": "Assigned",
+					"count": 4,
+					"countColor": "#f59e0b"
+				},
+				{
+					"label": "In Progress",
+					"count": 1,
+					"countColor": "#06b6d4"
+				},
+				{
+					"label": "Complete"
+				}
+			]
+		}
+	],
+	"sidebar": [
+		{
+			"label": "Portfolio",
+			"icon": "🏗️",
+			"expanded": true,
+			"items": [
+				{
+					"key": "property_item",
+					"label": "Property",
+					"labelPlural": "Properties"
+				},
+				{
+					"key": "unit",
+					"label": "Unit",
+					"labelPlural": "Units"
+				}
+			]
+		},
+		{
+			"label": "Leasing",
+			"icon": "📝",
+			"expanded": true,
+			"items": [
+				{
+					"key": "tenant",
+					"label": "Tenant",
+					"labelPlural": "Tenants"
+				},
+				{
+					"key": "lease",
+					"label": "Lease",
+					"labelPlural": "Leases"
+				},
+				{
+					"key": "rent_charge",
+					"label": "Rent Charge",
+					"labelPlural": "Rent Charges"
+				}
+			]
+		},
+		{
+			"label": "Maintenance",
+			"icon": "🔧",
+			"expanded": false,
+			"items": [
+				{
+					"key": "maintenance_request",
+					"label": "Request",
+					"labelPlural": "Maintenance Requests"
+				},
+				{
+					"key": "vendor",
+					"label": "Vendor",
+					"labelPlural": "Vendors"
+				}
+			]
+		}
+	],
+	"entities": {
+		"tenant": {
+			"label": "Tenant",
+			"labelPlural": "Tenants",
+			"columns": [
+				{
+					"field": "name",
+					"label": "Name",
+					"primary": true
+				},
+				{
+					"field": "unit",
+					"label": "Unit"
+				},
+				{
+					"field": "property",
+					"label": "Property"
+				},
+				{
+					"field": "rent",
+					"label": "Monthly Rent",
+					"format": "currency",
+					"align": "right"
+				},
+				{
+					"field": "leaseEnd",
+					"label": "Lease End",
+					"format": "date"
+				},
+				{
+					"field": "status",
+					"label": "Status",
+					"format": "status_badge"
+				}
+			],
+			"filters": [
+				"Active",
+				"Pending",
+				"Past"
+			],
+			"statusColors": {
+				"Active": "#10b981",
+				"Pending": "#f59e0b",
+				"Past": "#64748b"
+			},
+			"createForm": {
+				"action": "prop-add-tenant",
+				"submitLabel": "Add Tenant",
+				"sections": [
+					{
+						"label": "Tenant Information",
+						"fields": [
+							{
+								"name": "first_name",
+								"label": "First Name",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "last_name",
+								"label": "Last Name",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "email",
+								"label": "Email",
+								"type": "email",
+								"required": true
+							},
+							{
+								"name": "phone",
+								"label": "Phone",
+								"type": "tel"
+							}
+						]
+					},
+					{
+						"label": "Lease Details",
+						"fields": [
+							{
+								"name": "property",
+								"label": "Property",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "unit",
+								"label": "Unit",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "rent",
+								"label": "Monthly Rent",
+								"type": "currency",
+								"required": true
+							},
+							{
+								"name": "lease_start",
+								"label": "Lease Start",
+								"type": "date",
+								"required": true
+							},
+							{
+								"name": "lease_end",
+								"label": "Lease End",
+								"type": "date",
+								"required": true
+							}
+						]
+					}
+				]
+			}
+		},
+		"lease": {
+			"label": "Lease",
+			"labelPlural": "Leases",
+			"columns": [
+				{
+					"field": "id",
+					"label": "Lease ID",
+					"width": 120
+				},
+				{
+					"field": "tenant",
+					"label": "Tenant",
+					"primary": true
+				},
+				{
+					"field": "unit",
+					"label": "Unit"
+				},
+				{
+					"field": "start",
+					"label": "Start",
+					"format": "date"
+				},
+				{
+					"field": "end",
+					"label": "End",
+					"format": "date"
+				},
+				{
+					"field": "rent",
+					"label": "Rent",
+					"format": "currency",
+					"align": "right"
+				},
+				{
+					"field": "status",
+					"label": "Status",
+					"format": "status_badge"
+				}
+			],
+			"filters": [
+				"Active",
+				"Expiring",
+				"Expired",
+				"Draft"
+			],
+			"statusColors": {
+				"Active": "#10b981",
+				"Expiring": "#f59e0b",
+				"Expired": "#ef4444",
+				"Draft": "#64748b"
+			},
+			"createForm": {
+				"action": "prop-add-lease",
+				"submitLabel": "Create Lease",
+				"sections": [
+					{
+						"label": "Lease Details",
+						"fields": [
+							{
+								"name": "tenant",
+								"label": "Tenant",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "property",
+								"label": "Property",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "unit",
+								"label": "Unit",
+								"type": "text",
+								"required": true
+							},
+							{
+								"name": "start_date",
+								"label": "Start Date",
+								"type": "date",
+								"required": true
+							},
+							{
+								"name": "end_date",
+								"label": "End Date",
+								"type": "date",
+								"required": true
+							},
+							{
+								"name": "rent",
+								"label": "Monthly Rent",
+								"type": "currency",
+								"required": true
+							}
+						]
+					},
+					{
+						"label": "Terms",
+						"fields": [
+							{
+								"name": "deposit",
+								"label": "Security Deposit",
+								"type": "currency"
+							},
+							{
+								"name": "lease_type",
+								"label": "Lease Type",
+								"type": "select",
+								"options": [
+									"Fixed",
+									"Month-to-Month"
+								]
+							},
+							{
+								"name": "notes",
+								"label": "Special Terms",
+								"type": "textarea"
+							}
+						]
+					}
+				]
+			}
+		}
+	},
+	"attention": [
+		{
+			"message": "2 maintenance requests urgent (plumbing leak, broken lock)",
+			"severity": "critical",
+			"href": "/maintenance_request"
+		},
+		{
+			"message": "3 leases expiring within 60 days",
+			"severity": "warning",
+			"href": "/lease"
+		},
+		{
+			"message": "Rent payment overdue: Rachel Thompson (Apt 108)",
+			"severity": "warning",
+			"href": "/tenant"
+		}
+	],
+	"activity": [
+		{
+			"message": "Maintenance completed: Apt 312 HVAC filter replaced",
+			"timestamp": "3h ago",
+			"icon": "🔧"
+		},
+		{
+			"message": "Lease renewal sent to Alex Rivera (Apt 204)",
+			"timestamp": "Today",
+			"icon": "📝"
+		},
+		{
+			"message": "Application received: Priya Sharma for Apt 401",
+			"timestamp": "Today",
+			"icon": "📋"
+		},
+		{
+			"message": "Rent collected: David Kim $1,450",
+			"timestamp": "Yesterday",
+			"icon": "💰"
+		},
+		{
+			"message": "Move-in inspection completed: Unit 3C",
+			"timestamp": "2 days ago",
+			"icon": "🏠"
+		}
+	],
+	"mockData": {
+		"tenant": [
+			{
+				"name": "Alex Rivera",
+				"unit": "Apt 204",
+				"property": "Sunset Towers",
+				"rent": 1800,
+				"leaseEnd": "2026-08-31",
+				"status": "Active"
+			},
+			{
+				"name": "Maria Gonzalez",
+				"unit": "Apt 312",
+				"property": "Sunset Towers",
+				"rent": 2100,
+				"leaseEnd": "2026-04-30",
+				"status": "Active"
+			},
+			{
+				"name": "David Kim",
+				"unit": "Unit 5B",
+				"property": "Oak Street Commons",
+				"rent": 1450,
+				"leaseEnd": "2026-05-15",
+				"status": "Active"
+			},
+			{
+				"name": "Rachel Thompson",
+				"unit": "Apt 108",
+				"property": "Sunset Towers",
+				"rent": 1650,
+				"leaseEnd": "2026-03-31",
+				"status": "Expiring"
+			},
+			{
+				"name": "James Park",
+				"unit": "Unit 2A",
+				"property": "Oak Street Commons",
+				"rent": 1200,
+				"leaseEnd": "2026-04-15",
+				"status": "Expiring"
+			},
+			{
+				"name": "Priya Sharma",
+				"unit": "Apt 401",
+				"property": "Sunset Towers",
+				"rent": 2400,
+				"leaseEnd": "",
+				"status": "Pending"
+			}
+		],
+		"lease": [
+			{
+				"id": "LSE-001",
+				"tenant": "Alex Rivera",
+				"unit": "Apt 204",
+				"start": "2025-09-01",
+				"end": "2026-08-31",
+				"rent": 1800,
+				"status": "Active"
+			},
+			{
+				"id": "LSE-002",
+				"tenant": "Maria Gonzalez",
+				"unit": "Apt 312",
+				"start": "2025-05-01",
+				"end": "2026-04-30",
+				"rent": 2100,
+				"status": "Active"
+			},
+			{
+				"id": "LSE-003",
+				"tenant": "Rachel Thompson",
+				"unit": "Apt 108",
+				"start": "2025-04-01",
+				"end": "2026-03-31",
+				"rent": 1650,
+				"status": "Expiring"
+			},
+			{
+				"id": "LSE-004",
+				"tenant": "James Park",
+				"unit": "Unit 2A",
+				"start": "2025-04-15",
+				"end": "2026-04-15",
+				"rent": 1200,
+				"status": "Expiring"
+			},
+			{
+				"id": "LSE-005",
+				"tenant": "Priya Sharma",
+				"unit": "Apt 401",
+				"start": "2026-04-01",
+				"end": "2027-03-31",
+				"rent": 2400,
+				"status": "Draft"
+			}
+		]
+	}
+}
