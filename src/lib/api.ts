@@ -66,6 +66,14 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 	supplier: {
 		supplier_type: 'type'
 	},
+	quotation: {
+		naming_series: 'id',
+		customer_name: 'customer',
+		customer_id: 'customer',
+		transaction_date: 'date',
+		grand_total: 'total',
+		valid_till: 'validUntil'
+	},
 	sales_order: {
 		naming_series: 'id',
 		customer_name: 'customer',
@@ -73,6 +81,13 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 		order_date: 'date',
 		grand_total: 'total',
 		delivery_date: 'deliveryDate'
+	},
+	delivery_note: {
+		naming_series: 'id',
+		customer_name: 'customer',
+		customer_id: 'customer',
+		posting_date: 'date',
+		grand_total: 'total'
 	},
 	sales_invoice: {
 		naming_series: 'id',
@@ -88,6 +103,21 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 		supplier_id: 'supplier',
 		order_date: 'date',
 		grand_total: 'total'
+	},
+	purchase_receipt: {
+		naming_series: 'id',
+		supplier_name: 'supplier',
+		supplier_id: 'supplier',
+		posting_date: 'date',
+		grand_total: 'total'
+	},
+	purchase_invoice: {
+		naming_series: 'id',
+		supplier_name: 'supplier',
+		supplier_id: 'supplier',
+		posting_date: 'date',
+		grand_total: 'total',
+		outstanding_amount: 'outstanding'
 	},
 	item: {
 		item_name: 'name',

@@ -29,13 +29,21 @@
 	} = $props();
 
 	let activeFilter = $state('All');
+	let searchQuery = $state('');
 	let focusedRowIndex = $state(-1);
 
-	let filtered = $derived(
-		activeFilter === 'All'
+	let filtered = $derived.by(() => {
+		let rows = activeFilter === 'All'
 			? data
-			: data.filter((r) => String(r[filterField] ?? '').toLowerCase() === activeFilter.toLowerCase())
-	);
+			: data.filter((r) => String(r[filterField] ?? '').toLowerCase() === activeFilter.toLowerCase());
+		if (searchQuery.trim()) {
+			const q = searchQuery.trim().toLowerCase();
+			rows = rows.filter((r) =>
+				columns.some((col) => String(r[col.field] ?? '').toLowerCase().includes(q))
+			);
+		}
+		return rows;
+	});
 
 	function formatCell(value: unknown, col: ColumnDef): string {
 		if (value == null) return '—';
@@ -119,13 +127,22 @@
 		{:else}
 			<div></div>
 		{/if}
-		<button
-			class="cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-			onclick={exportCSV}
-			aria-label="Export as CSV"
-		>
-			↓ CSV
-		</button>
+		<div class="flex items-center gap-2">
+			<input
+				type="text"
+				placeholder="Search..."
+				bind:value={searchQuery}
+				class="rounded-md border border-border bg-transparent px-2.5 py-1 text-xs text-text placeholder:text-muted focus:border-accent focus:outline-none"
+				aria-label="Search table"
+			/>
+			<button
+				class="cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+				onclick={exportCSV}
+				aria-label="Export as CSV"
+			>
+				↓ CSV
+			</button>
+		</div>
 	</div>
 
 	<!-- Table -->
@@ -197,6 +214,7 @@
 		<p class="text-xs text-muted" aria-live="polite">
 			Showing {filtered.length} of {totalCount || data.length} records
 			{#if activeFilter !== 'All'} · Filtered: {activeFilter}{/if}
+			{#if searchQuery.trim()} · Search: "{searchQuery.trim()}"{/if}
 		</p>
 		{#if hasMore && onLoadMore}
 			<button
