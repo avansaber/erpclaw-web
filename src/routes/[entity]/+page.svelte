@@ -31,6 +31,7 @@
 	$effect(() => {
 		if (entityKey && !$authLoading && $isAuthenticated) {
 			selectedRow = null;
+			liveData = null; // Clear stale data so DataTable unmounts during load
 			loadLiveData();
 		}
 	});
