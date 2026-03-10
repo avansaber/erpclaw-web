@@ -147,8 +147,8 @@ export const auth = {
 
 		let res = await fetch(url, { ...init, headers, credentials: 'include' });
 
-		// If 401, try refreshing the token once
-		if (res.status === 401 && token) {
+		// If 401, try refreshing the token once (even if token was null — handles full page reload race)
+		if (res.status === 401) {
 			const refreshed = await auth.refresh();
 			if (refreshed) {
 				state.subscribe((s) => (token = s.accessToken))();
