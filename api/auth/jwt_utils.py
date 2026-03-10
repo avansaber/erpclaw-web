@@ -99,6 +99,7 @@ def verify_refresh_token(token: str) -> dict | None:
     try:
         row = conn.execute(
             """SELECT s.id as session_id, s.user_id, s.expires_at,
+                      s.revoked_at, s.grace_until,
                       u.username, u.email, u.full_name, u.status
                FROM web_session s
                JOIN web_user u ON s.user_id = u.id
@@ -108,6 +109,25 @@ def verify_refresh_token(token: str) -> dict | None:
 
         if not row:
             return None
+
+        # Check if revoked
+        if row["revoked_at"]:
+            grace = row["grace_until"]
+            if grace:
+                grace_dt = datetime.fromisoformat(grace)
+                if grace_dt.tzinfo is None:
+                    grace_dt = grace_dt.replace(tzinfo=timezone.utc)
+                if datetime.now(timezone.utc) > grace_dt:
+                    # Grace period expired, clean up
+                    conn.execute("DELETE FROM web_session WHERE id = ?", (row["session_id"],))
+                    conn.commit()
+                    return None
+                # Within grace period, allow
+            else:
+                # Revoked with no grace, reject
+                conn.execute("DELETE FROM web_session WHERE id = ?", (row["session_id"],))
+                conn.commit()
+                return None
 
         # Check expiry
         expires = datetime.fromisoformat(row["expires_at"])
@@ -134,12 +154,17 @@ def verify_refresh_token(token: str) -> dict | None:
         conn.close()
 
 
-def revoke_session(token: str):
-    """Delete a session by refresh token."""
+def revoke_session(token: str, grace_seconds: int = 30):
+    """Mark a session as revoked with grace period for concurrent requests."""
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     conn = get_web_db()
     try:
-        conn.execute("DELETE FROM web_session WHERE refresh_token_hash = ?", (token_hash,))
+        now = datetime.now(timezone.utc)
+        grace_until = (now + timedelta(seconds=grace_seconds)).isoformat()
+        conn.execute(
+            "UPDATE web_session SET revoked_at = ?, grace_until = ? WHERE refresh_token_hash = ?",
+            (now.isoformat(), grace_until, token_hash),
+        )
         conn.commit()
     finally:
         conn.close()

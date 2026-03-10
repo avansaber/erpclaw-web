@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS web_session (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_active_at TEXT NOT NULL DEFAULT (datetime('now')),
     ip_address TEXT,
-    user_agent TEXT
+    user_agent TEXT,
+    revoked_at TEXT,
+    grace_until TEXT
 );
 
 -- Roles
@@ -150,6 +152,16 @@ def init_web_db():
     conn = get_web_db()
     try:
         conn.executescript(SCHEMA_SQL)
+
+        # Migration: add revoked_at and grace_until columns for existing DBs
+        try:
+            conn.execute("ALTER TABLE web_session ADD COLUMN revoked_at TEXT")
+        except:
+            pass
+        try:
+            conn.execute("ALTER TABLE web_session ADD COLUMN grace_until TEXT")
+        except:
+            pass
 
         # Seed roles
         for name, desc, is_system in SEED_ROLES:
