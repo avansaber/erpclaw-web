@@ -68,6 +68,7 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 	},
 	sales_order: {
 		naming_series: 'id',
+		customer_name: 'customer',
 		customer_id: 'customer',
 		order_date: 'date',
 		grand_total: 'total',
@@ -75,6 +76,7 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 	},
 	sales_invoice: {
 		naming_series: 'id',
+		customer_name: 'customer',
 		customer_id: 'customer',
 		posting_date: 'date',
 		grand_total: 'total',
@@ -83,11 +85,13 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 	purchase_order: {
 		naming_series: 'id',
 		supplier_name: 'supplier',
+		supplier_id: 'supplier',
 		order_date: 'date',
 		grand_total: 'total'
 	},
 	item: {
 		item_name: 'name',
+		item_group_name: 'group',
 		item_group_id: 'group',
 		stock_uom: 'uom',
 		standard_rate: 'cost'
@@ -117,19 +121,51 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 	}
 };
 
+/**
+ * Fields where a human-readable "name" version should override a UUID "id" version.
+ * Maps target field → list of source fields in priority order.
+ */
+const NAME_PRIORITY: Record<string, string[]> = {
+	customer: ['customer_name'],
+	supplier: ['supplier_name'],
+	group: ['item_group_name']
+};
+
 function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<string, unknown>[] {
 	const fieldMap = FIELD_MAPS[entityKey];
 	if (!fieldMap) return rows;
 
 	return rows.map((row) => {
 		const mapped: Record<string, unknown> = {};
+
+		// Always preserve the raw UUID id for action execution
+		if ('id' in row) {
+			mapped._id = row.id;
+		}
+
+		// First pass: map all fields
 		for (const [key, value] of Object.entries(row)) {
 			const mappedKey = fieldMap[key] ?? key;
-			// Don't overwrite if the mapped key already has a value from a prior field
-			if (!(mappedKey in mapped)) {
+			if (!(mappedKey in mapped) || mappedKey === '_id') {
 				mapped[mappedKey] = value;
 			}
 		}
+
+		// Second pass: naming_series should always win over raw id for display
+		if (row.naming_series && fieldMap.naming_series === 'id') {
+			mapped.id = row.naming_series;
+		}
+
+		// Third pass: prefer human-readable name fields over UUIDs
+		for (const [target, sources] of Object.entries(NAME_PRIORITY)) {
+			for (const src of sources) {
+				if (row[src] != null && String(row[src]).trim() !== '') {
+					mapped[target] = row[src];
+					break;
+				}
+			}
+		}
+
 		return mapped;
 	});
 }

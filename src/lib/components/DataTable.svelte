@@ -6,6 +6,7 @@
 		columns,
 		data,
 		filters = [],
+		filterField = 'status',
 		statusColors = {},
 		onRowClick,
 		selectedRow = null
@@ -13,6 +14,7 @@
 		columns: ColumnDef[];
 		data: Record<string, unknown>[];
 		filters?: string[];
+		filterField?: string;
 		statusColors?: Record<string, string>;
 		onRowClick?: (row: Record<string, unknown>) => void;
 		selectedRow?: Record<string, unknown> | null;
@@ -24,7 +26,7 @@
 	let filtered = $derived(
 		activeFilter === 'All'
 			? data
-			: data.filter((r) => r.status === activeFilter)
+			: data.filter((r) => r[filterField] === activeFilter)
 	);
 
 	function formatCell(value: unknown, col: ColumnDef): string {

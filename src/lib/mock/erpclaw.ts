@@ -120,6 +120,7 @@ export const erpclaw: VerticalLayout = {
 				{ field: 'balance', label: 'Balance', format: 'currency', align: 'right' }
 			],
 			filters: ['Individual', 'Company'],
+			filterField: 'type',
 			createForm: {
 				action: 'add-customer',
 				submitLabel: 'Create Customer',
@@ -207,7 +208,11 @@ export const erpclaw: VerticalLayout = {
 				Draft: '#64748b',
 				Submitted: '#06b6d4',
 				Delivered: '#10b981',
-				Cancelled: '#ef4444'
+				Cancelled: '#ef4444',
+				confirmed: '#06b6d4',
+				active: '#10b981',
+				draft: '#64748b',
+				cancelled: '#ef4444'
 			},
 			createForm: {
 				action: 'add-sales-order',
@@ -283,7 +288,11 @@ export const erpclaw: VerticalLayout = {
 				Paid: '#10b981',
 				Submitted: '#06b6d4',
 				Overdue: '#ef4444',
-				Draft: '#64748b'
+				Draft: '#64748b',
+				submitted: '#06b6d4',
+				draft: '#64748b',
+				paid: '#10b981',
+				overdue: '#ef4444'
 			},
 			createForm: {
 				action: 'create-sales-invoice',
@@ -350,6 +359,7 @@ export const erpclaw: VerticalLayout = {
 				{ field: 'balance', label: 'Balance', format: 'currency', align: 'right' }
 			],
 			filters: ['Individual', 'Company'],
+			filterField: 'type',
 			createForm: {
 				action: 'add-supplier',
 				submitLabel: 'Create Supplier',
@@ -393,7 +403,11 @@ export const erpclaw: VerticalLayout = {
 				Draft: '#64748b',
 				Submitted: '#06b6d4',
 				Received: '#10b981',
-				Cancelled: '#ef4444'
+				Cancelled: '#ef4444',
+				confirmed: '#06b6d4',
+				fully_invoiced: '#10b981',
+				draft: '#64748b',
+				cancelled: '#ef4444'
 			},
 			createForm: {
 				action: 'add-purchase-order',
@@ -607,6 +621,7 @@ export const erpclaw: VerticalLayout = {
 				{ field: 'balance', label: 'Balance', format: 'currency', align: 'right' }
 			],
 			filters: ['Asset', 'Liability', 'Equity', 'Income', 'Expense'],
+			filterField: 'rootType',
 			createForm: {
 				action: 'add-account',
 				submitLabel: 'Create Account',

@@ -72,6 +72,7 @@ export interface EntityDef {
 	labelPlural: string;
 	columns: ColumnDef[];
 	filters: string[];
+	filterField?: string;
 	createForm: FormSpec;
 	statusColors?: Record<string, string>;
 	detailSections?: { label: string; fields: string[]; collapsed?: boolean }[];

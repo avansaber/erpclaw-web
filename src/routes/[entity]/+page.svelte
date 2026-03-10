@@ -66,13 +66,16 @@
 		const skill = skillForAction(action);
 		actionLoading = action;
 
-		// Build params from the selected record
+		// Build params with the correct param name for this entity.
+		// Backend expects e.g. --sales-order-id, --purchase-order-id, --sales-invoice-id
 		const params: Record<string, unknown> = {};
 
-		// For actions that reference this document, pass the ID
-		const idField = entityDef.columns.find((c) => c.field === 'id');
-		if (idField && selectedRow.id) {
-			params.id = selectedRow.id;
+		// Use _id (raw UUID) if available from live data, otherwise fall back to id
+		const rowId = selectedRow._id ?? selectedRow.id;
+		if (rowId) {
+			// Convert entity key to param name: sales_order → sales_order_id
+			const paramKey = `${entityKey}_id`;
+			params[paramKey] = rowId;
 		}
 
 		const result = await executeAction(skill, action, params);
@@ -118,6 +121,7 @@
 						columns={entityDef.columns}
 						data={entityData}
 						filters={entityDef.filters}
+						filterField={entityDef.filterField ?? 'status'}
 						statusColors={entityDef.statusColors ?? {}}
 						onRowClick={handleRowClick}
 						selectedRow={selectedRow}
