@@ -12,6 +12,7 @@ SKILLS_DIR = os.path.expanduser("~/clawd/skills")
 MODULES_DIR = os.path.expanduser("~/.openclaw/erpclaw/modules")
 ERPCLAW_LIB = os.path.expanduser("~/.openclaw/erpclaw/lib")
 ERP_DB_PATH = os.path.expanduser("~/.openclaw/erpclaw/data.sqlite")
+WEB_DB_PATH = os.path.expanduser("~/.openclaw/erpclaw-web/web.sqlite")
 
 # Timeout for action execution
 ACTION_TIMEOUT = 30  # seconds
@@ -55,16 +56,32 @@ def _build_args(action: str, params: dict) -> list[str]:
 
 
 def _get_default_company_id() -> str | None:
-    """If exactly one company exists, return its ID."""
+    """Get the default company ID for auto-injection.
+
+    Priority: web_config 'default_company_id' > single company > first company.
+    """
+    # 1. Check web_config for explicit default
+    if Path(WEB_DB_PATH).exists():
+        try:
+            conn = sqlite3.connect(WEB_DB_PATH)
+            row = conn.execute(
+                "SELECT value FROM web_config WHERE key='default_company_id'"
+            ).fetchone()
+            conn.close()
+            if row:
+                return row[0]
+        except Exception:
+            pass
+
+    # 2. Fall back to ERP database
     if not Path(ERP_DB_PATH).exists():
         return None
     try:
         conn = sqlite3.connect(ERP_DB_PATH)
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute("SELECT id FROM company LIMIT 2").fetchall()
+        row = conn.execute("SELECT id FROM company ORDER BY created_at LIMIT 1").fetchone()
         conn.close()
-        if len(rows) == 1:
-            return rows[0]["id"]
+        if row:
+            return row[0]
     except Exception:
         pass
     return None
