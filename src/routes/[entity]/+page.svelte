@@ -10,8 +10,29 @@
 	import { isLoading as authLoading, isAuthenticated } from '$lib/auth';
 	import { onWSEvent } from '$lib/websocket';
 	import { onDestroy } from 'svelte';
+	import { goto } from '$app/navigation';
 
-	let entityKey = $derived($page.params.entity ?? '');
+	// URL aliases: common short names → actual entity keys
+	const ENTITY_ALIASES: Record<string, string> = {
+		payment: 'payment_entry',
+		payments: 'payment_entry',
+		stock: 'stock_entry',
+		journal: 'journal_entry',
+		expense: 'expense_claim',
+		expenses: 'expense_claim',
+		credit_notes: 'credit_note',
+	};
+
+	let rawEntityKey = $derived($page.params.entity ?? '');
+	let entityKey = $derived(ENTITY_ALIASES[rawEntityKey] ?? rawEntityKey);
+
+	// Redirect to canonical URL if alias was used
+	$effect(() => {
+		if (rawEntityKey && ENTITY_ALIASES[rawEntityKey]) {
+			goto(`/${ENTITY_ALIASES[rawEntityKey]}`, { replaceState: true });
+		}
+	});
+
 	let entityDef = $derived(entityKey ? $layout.entities[entityKey] : undefined);
 	let mockData = $derived(entityKey ? ($layout.mockData[entityKey] ?? []) : []);
 
