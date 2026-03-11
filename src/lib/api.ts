@@ -146,8 +146,7 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 		naming_series: 'id',
 		posting_date: 'date',
 		entry_type: 'type',
-		total_debit: 'debit',
-		total_credit: 'credit'
+		total_debit: 'total'
 	},
 	stock_entry: {
 		naming_series: 'id',
@@ -288,14 +287,14 @@ export async function fetchEntityData(
 		else {
 			// Check for entity-named keys (e.g. { customers: [...], total_count: 13 })
 			for (const value of Object.values(data)) {
-				if (Array.isArray(value) && value.length > 0) {
+				if (Array.isArray(value)) {
 					rows = value as Record<string, unknown>[];
 					break;
 				}
 			}
 		}
 
-		if (!rows) return null;
+		if (rows === null) return null;
 
 		// Map field names from erpclaw schema to frontend columns
 		return {

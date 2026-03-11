@@ -121,7 +121,7 @@
 							{#if loadingData}
 								Loading...
 							{:else}
-								{totalCount || entityData.length} records
+								{totalCount || entityData.length} {(totalCount || entityData.length) === 1 ? 'record' : 'records'}
 								{#if liveData}<span class="text-emerald">(live)</span>{/if}
 							{/if}
 						</p>
