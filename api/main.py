@@ -1,5 +1,6 @@
 """ERPClaw Web API — FastAPI application."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,25 +21,26 @@ from init_db import init_web_db
 # Initialize database on startup
 init_web_db()
 
+# Production mode disables Swagger UI
+_is_production = os.environ.get("ERPCLAW_ENV", "development") == "production"
+
 app = FastAPI(
     title="ERPClaw Web API",
     version="1.0.0",
-    docs_url="/docs",
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
 )
 
-# CORS — allow SvelteKit dev + production
+# CORS — configurable origins via environment variable
+_default_origins = "http://localhost:5173,http://localhost:5180,http://localhost:4173"
+_origins = os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5180",
-        "http://localhost:4173",
-        "https://test1.erpclaw.ai",
-        "http://test1.erpclaw.ai",
-    ],
+    allow_origins=[o.strip() for o in _origins],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Auth middleware (after CORS so preflight passes)

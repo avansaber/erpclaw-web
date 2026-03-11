@@ -10,6 +10,8 @@ ExecStart=/home/ubuntu/erpclaw-web/api/.venv/bin/uvicorn main:app --host 127.0.0
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
+Environment=ERPCLAW_ENV=production
+Environment=ALLOWED_ORIGINS=https://test1.erpclaw.ai,http://test1.erpclaw.ai
 
 [Install]
 WantedBy=multi-user.target

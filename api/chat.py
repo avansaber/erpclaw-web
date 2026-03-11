@@ -259,6 +259,9 @@ def _query_erp(entity_key: str, filters: dict, mode: str = "list") -> dict:
     table = TABLE_MAP.get(entity_key)
     if not table:
         return {"error": f"Unknown entity: {entity_key}"}
+    # Defense-in-depth: validate table name is a safe SQL identifier
+    if not table.replace("_", "").isalnum():
+        return {"error": f"Invalid table name: {entity_key}"}
 
     try:
         conn = get_erp_db()
@@ -277,6 +280,9 @@ def _query_erp(entity_key: str, filters: dict, mode: str = "list") -> dict:
         date_filter = filters.get("_date_filter")
         if date_filter:
             date_col = _get_date_column(entity_key)
+            # Validate column name is a safe identifier
+            if not date_col.replace("_", "").isalnum():
+                return {"error": f"Invalid column name: {date_col}"}
             # Check if column exists
             cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
             if date_col in cols:
@@ -298,6 +304,9 @@ def _query_erp(entity_key: str, filters: dict, mode: str = "list") -> dict:
                     amount_col = candidate
                     break
 
+            # Validate amount_col is a safe identifier (from PRAGMA, not user input)
+            if amount_col and not amount_col.replace("_", "").isalnum():
+                amount_col = None
             if amount_col:
                 row = conn.execute(
                     f"SELECT COUNT(*) as cnt, SUM(CAST({amount_col} AS REAL)) as total FROM {table} WHERE {where_sql}",

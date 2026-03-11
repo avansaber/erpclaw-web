@@ -1,5 +1,7 @@
 """JWT auth middleware for FastAPI."""
 
+import os
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -15,10 +17,11 @@ PUBLIC_ROUTES = {
     "/api/health",
     "/api/layout/verticals",
     "/ws",
-    "/docs",
-    "/openapi.json",
-    "/redoc",
 }
+
+# Docs routes — only public in development
+if os.environ.get("ERPCLAW_ENV", "development") != "production":
+    PUBLIC_ROUTES.update({"/docs", "/openapi.json", "/redoc"})
 
 # Route prefixes that don't require auth
 PUBLIC_PREFIXES = ("/api/layout/",)

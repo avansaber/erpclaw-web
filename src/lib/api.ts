@@ -148,6 +148,34 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 		entry_type: 'type',
 		total_debit: 'debit',
 		total_credit: 'credit'
+	},
+	stock_entry: {
+		naming_series: 'id',
+		stock_entry_type: 'type',
+		posting_date: 'date'
+	},
+	payment_entry: {
+		naming_series: 'id',
+		payment_type: 'type',
+		posting_date: 'date',
+		paid_amount: 'amount',
+		party_name: 'party',
+		party_id: 'party'
+	},
+	expense_claim: {
+		naming_series: 'id',
+		expense_date: 'date',
+		total_amount: 'amount',
+		employee_name: 'employee',
+		employee_id: 'employee'
+	},
+	credit_note: {
+		naming_series: 'id',
+		customer_name: 'customer',
+		customer_id: 'customer',
+		posting_date: 'date',
+		grand_total: 'amount',
+		return_against_name: 'invoice'
 	}
 };
 
@@ -158,7 +186,9 @@ const FIELD_MAPS: Record<string, Record<string, string>> = {
 const NAME_PRIORITY: Record<string, string[]> = {
 	customer: ['customer_name'],
 	supplier: ['supplier_name'],
-	group: ['item_group_name']
+	group: ['item_group_name'],
+	employee: ['employee_name'],
+	party: ['party_name']
 };
 
 function mapFields(entityKey: string, rows: Record<string, unknown>[]): Record<string, unknown>[] {
@@ -215,12 +245,23 @@ export interface FetchResult {
  * Fetch list data for an entity.
  * Tries the API first, returns null if unavailable (caller falls back to mock).
  */
+/**
+ * Action name overrides for entities with irregular plurals or non-standard names.
+ */
+const ACTION_OVERRIDES: Record<string, string> = {
+	stock_entry: 'list-stock-entries',
+	journal_entry: 'list-journal-entries',
+	payment_entry: 'list-payments',
+	delivery_note: 'list-delivery-notes',
+	credit_note: 'list-credit-notes'
+};
+
 export async function fetchEntityData(
 	skill: string,
 	entityKey: string,
 	options?: { filters?: Record<string, string>; offset?: number; limit?: number }
 ): Promise<FetchResult | null> {
-	const action = `list-${entityKey.replace(/_/g, '-')}s`;
+	const action = ACTION_OVERRIDES[entityKey] ?? `list-${entityKey.replace(/_/g, '-')}s`;
 	const params: Record<string, unknown> = {};
 	if (options?.filters) {
 		Object.assign(params, options.filters);
