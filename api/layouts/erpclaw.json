@@ -1,8 +1,8 @@
 {
   "name": "erpclaw",
   "label": "ERPClaw",
-  "description": "Core ERP \u2014 Sales, Purchasing, Accounting, Inventory",
-  "icon": "\ud83d\udcca",
+  "description": "Core ERP — Sales, Purchasing, Accounting, Inventory",
+  "icon": "📊",
   "color": "#06b6d4",
   "kpis": [
     {
@@ -34,7 +34,7 @@
     {
       "key": "order_to_cash",
       "label": "Order to Cash",
-      "icon": "\ud83d\udcb0",
+      "icon": "💰",
       "primaryAction": "+ New Quote",
       "steps": [
         {
@@ -65,7 +65,7 @@
     {
       "key": "procure_to_pay",
       "label": "Procure to Pay",
-      "icon": "\ud83d\udce6",
+      "icon": "📦",
       "primaryAction": "+ New PO",
       "steps": [
         {
@@ -90,7 +90,7 @@
   "sidebar": [
     {
       "label": "Sales",
-      "icon": "\ud83d\uded2",
+      "icon": "🛒",
       "expanded": true,
       "items": [
         {
@@ -127,7 +127,7 @@
     },
     {
       "label": "Purchasing",
-      "icon": "\ud83d\ude9a",
+      "icon": "🚚",
       "expanded": false,
       "items": [
         {
@@ -154,7 +154,7 @@
     },
     {
       "label": "Inventory",
-      "icon": "\ud83d\udce6",
+      "icon": "📦",
       "expanded": false,
       "items": [
         {
@@ -176,7 +176,7 @@
     },
     {
       "label": "Accounting",
-      "icon": "\ud83d\udcd2",
+      "icon": "📒",
       "expanded": false,
       "items": [
         {
@@ -198,7 +198,7 @@
     },
     {
       "label": "HR",
-      "icon": "\ud83d\udc65",
+      "icon": "👥",
       "expanded": false,
       "items": [
         {
@@ -215,7 +215,7 @@
     },
     {
       "label": "Setup",
-      "icon": "\u2699\ufe0f",
+      "icon": "⚙️",
       "expanded": false,
       "items": [
         {
@@ -283,39 +283,14 @@
                 "required": true
               },
               {
-                "name": "type",
+                "name": "customer_type",
                 "label": "Type",
                 "type": "select",
                 "options": [
-                  "Individual",
-                  "Company"
+                  "individual",
+                  "company"
                 ],
                 "required": true
-              },
-              {
-                "name": "territory",
-                "label": "Territory",
-                "type": "text"
-              },
-              {
-                "name": "industry",
-                "label": "Industry",
-                "type": "text"
-              }
-            ]
-          },
-          {
-            "label": "Contact",
-            "fields": [
-              {
-                "name": "phone",
-                "label": "Phone",
-                "type": "tel"
-              },
-              {
-                "name": "email",
-                "label": "Email",
-                "type": "email"
               }
             ]
           }
@@ -844,34 +819,14 @@
                 "required": true
               },
               {
-                "name": "type",
+                "name": "supplier_type",
                 "label": "Type",
                 "type": "select",
                 "options": [
-                  "Individual",
-                  "Company"
+                  "individual",
+                  "company"
                 ],
                 "required": true
-              },
-              {
-                "name": "territory",
-                "label": "Territory",
-                "type": "text"
-              }
-            ]
-          },
-          {
-            "label": "Contact",
-            "fields": [
-              {
-                "name": "phone",
-                "label": "Phone",
-                "type": "tel"
-              },
-              {
-                "name": "email",
-                "label": "Email",
-                "type": "email"
               }
             ]
           }
@@ -1199,7 +1154,13 @@
             "label": "Item Details",
             "fields": [
               {
-                "name": "name",
+                "name": "item_code",
+                "label": "Item Code",
+                "type": "text",
+                "required": true
+              },
+              {
+                "name": "item_name",
                 "label": "Item Name",
                 "type": "text",
                 "required": true
@@ -1210,20 +1171,15 @@
                 "type": "text"
               },
               {
-                "name": "uom",
+                "name": "stock_uom",
                 "label": "Default UOM",
                 "type": "text",
                 "required": true
               },
               {
-                "name": "standard_cost",
-                "label": "Standard Cost",
+                "name": "standard_rate",
+                "label": "Standard Rate",
                 "type": "currency"
-              },
-              {
-                "name": "opening_stock",
-                "label": "Opening Stock",
-                "type": "number"
               }
             ]
           }
@@ -1268,7 +1224,7 @@
                 "required": true
               },
               {
-                "name": "type",
+                "name": "warehouse_type",
                 "label": "Type",
                 "type": "select",
                 "options": [
@@ -1276,11 +1232,6 @@
                   "Transit",
                   "Scrap"
                 ]
-              },
-              {
-                "name": "address",
-                "label": "Address",
-                "type": "text"
               }
             ]
           }
@@ -1430,7 +1381,7 @@
             "label": "Account Details",
             "fields": [
               {
-                "name": "number",
+                "name": "account_number",
                 "label": "Account Number",
                 "type": "text",
                 "required": true
@@ -1460,8 +1411,8 @@
                 "type": "text"
               },
               {
-                "name": "parent_account",
-                "label": "Parent Account",
+                "name": "parent_id",
+                "label": "Parent Account ID",
                 "type": "text"
               }
             ]
@@ -1703,19 +1654,19 @@
                 "required": true
               },
               {
-                "name": "email",
+                "name": "company_email",
                 "label": "Email",
                 "type": "email",
                 "required": true
               },
               {
-                "name": "department",
-                "label": "Department",
+                "name": "department_id",
+                "label": "Department ID",
                 "type": "text"
               },
               {
-                "name": "designation",
-                "label": "Designation",
+                "name": "designation_id",
+                "label": "Designation ID",
                 "type": "text"
               },
               {
@@ -1853,7 +1804,7 @@
                 "required": true
               },
               {
-                "name": "abbreviation",
+                "name": "abbr",
                 "label": "Abbreviation",
                 "type": "text",
                 "required": true
@@ -1971,7 +1922,7 @@
                 "required": true
               },
               {
-                "name": "template_type",
+                "name": "tax_type",
                 "label": "Type",
                 "type": "select",
                 "options": [
@@ -2019,34 +1970,34 @@
     {
       "message": "Invoice INV-001 submitted to Acme Corp",
       "timestamp": "2h ago",
-      "icon": "\ud83d\udcc4",
+      "icon": "📄",
       "href": "/sales_invoice"
     },
     {
       "message": "Payment $1,200 received from Jane Smith",
       "timestamp": "4h ago",
-      "icon": "\ud83d\udcb0"
+      "icon": "💰"
     },
     {
       "message": "Customer TechStart Inc updated",
       "timestamp": "Yesterday",
-      "icon": "\ud83d\udc64",
+      "icon": "👤",
       "href": "/customer"
     },
     {
       "message": "Quotation QT-042 sent to Global Trading",
       "timestamp": "Yesterday",
-      "icon": "\ud83d\udce7"
+      "icon": "📧"
     },
     {
       "message": "Purchase Order PO-018 approved",
       "timestamp": "2 days ago",
-      "icon": "\u2705"
+      "icon": "✅"
     },
     {
       "message": "Delivery Note DN-012 submitted",
       "timestamp": "2 days ago",
-      "icon": "\ud83d\udce6",
+      "icon": "📦",
       "href": "/delivery_note"
     }
   ],
@@ -2399,7 +2350,7 @@
         "id": "SE-041",
         "type": "Material Receipt",
         "date": "2026-03-10",
-        "from": "\u2014",
+        "from": "—",
         "to": "Main Warehouse",
         "status": "Submitted"
       },

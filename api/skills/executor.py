@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from pathlib import Path
 SKILLS_DIR = os.path.expanduser("~/clawd/skills")
 MODULES_DIR = os.path.expanduser("~/.openclaw/erpclaw/modules")
 ERPCLAW_LIB = os.path.expanduser("~/.openclaw/erpclaw/lib")
+ERP_DB_PATH = os.path.expanduser("~/.openclaw/erpclaw/data.sqlite")
 
 # Timeout for action execution
 ACTION_TIMEOUT = 30  # seconds
@@ -52,6 +54,22 @@ def _build_args(action: str, params: dict) -> list[str]:
     return args
 
 
+def _get_default_company_id() -> str | None:
+    """If exactly one company exists, return its ID."""
+    if not Path(ERP_DB_PATH).exists():
+        return None
+    try:
+        conn = sqlite3.connect(ERP_DB_PATH)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT id FROM company LIMIT 2").fetchall()
+        conn.close()
+        if len(rows) == 1:
+            return rows[0]["id"]
+    except Exception:
+        pass
+    return None
+
+
 async def execute_action(
     skill: str, action: str, params: dict | None = None
 ) -> dict:
@@ -61,6 +79,13 @@ async def execute_action(
         return {"error": f"Skill '{skill}' not found"}
 
     params = params or {}
+
+    # Auto-inject company_id if not provided and a single company exists
+    if "company_id" not in params:
+        cid = _get_default_company_id()
+        if cid:
+            params["company_id"] = cid
+
     cmd = [sys.executable, script] + _build_args(action, params)
 
     # Set up environment
