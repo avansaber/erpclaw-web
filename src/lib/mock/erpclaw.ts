@@ -941,7 +941,7 @@ export const erpclaw: VerticalLayout = {
 			{ name: 'TechStart Inc', type: 'Company', territory: 'West', email: 'ap@techstart.io', balance: 8900 },
 			{ name: 'Bob Wilson', type: 'Individual', territory: 'Central', email: 'bob@wilson.net', balance: 1500 },
 			{ name: 'Global Trading Co', type: 'Company', territory: 'East', email: 'finance@globaltrade.com', balance: 24100 },
-			{ name: 'Sarah Chen', type: 'Individual', territory: 'West', email: 'sarah.chen@gmail.com', balance: 750 },
+			{ name: 'Sarah Chen', type: 'Individual', territory: 'West', email: 'sarah.chen@example.com', balance: 750 },
 			{ name: 'Metro Services LLC', type: 'Company', territory: 'Central', email: 'accounts@metro.com', balance: 5600 }
 		],
 		quotation: [

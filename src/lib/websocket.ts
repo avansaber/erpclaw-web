@@ -6,7 +6,8 @@
  *   data_changed: entity data was modified (triggers list refresh)
  */
 
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
+import { auth } from './auth';
 
 export interface WSEvent {
 	event: string;
@@ -26,7 +27,9 @@ let pingTimer: ReturnType<typeof setInterval> | null = null;
 
 function getWsUrl(): string {
 	const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-	return `${proto}//${window.location.host}/ws`;
+	const state = get(auth);
+	const token = state.accessToken ?? '';
+	return `${proto}//${window.location.host}/ws?token=${encodeURIComponent(token)}`;
 }
 
 function handleMessage(raw: string) {

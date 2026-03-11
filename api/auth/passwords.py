@@ -1,6 +1,7 @@
 """Password hashing — PBKDF2-HMAC-SHA256, compatible with erpclaw_lib."""
 
 import hashlib
+import hmac
 import os
 import secrets
 
@@ -22,7 +23,7 @@ def verify_password(password: str, password_hash: str) -> bool:
         iterations_str, salt, stored_hash = rest.split("$", 2)
         iterations = int(iterations_str)
         dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), iterations)
-        return dk.hex() == stored_hash
+        return hmac.compare_digest(dk.hex(), stored_hash)
     except (ValueError, AttributeError):
         return False
 

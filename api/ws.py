@@ -8,7 +8,9 @@ Events:
 import json
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+
+from auth.jwt_utils import verify_access_token
 
 router = APIRouter(tags=["websocket"])
 
@@ -48,8 +50,13 @@ manager = ConnectionManager()
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket):
-    """WebSocket endpoint for real-time notifications."""
+async def websocket_endpoint(ws: WebSocket, token: str = Query(default="")):
+    """WebSocket endpoint for real-time notifications. Requires JWT token."""
+    # Verify JWT token before accepting connection
+    if not token or not verify_access_token(token):
+        await ws.close(code=4001, reason="Unauthorized")
+        return
+
     await manager.connect(ws)
     try:
         while True:

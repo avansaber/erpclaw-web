@@ -212,7 +212,7 @@
 	<!-- Load more + record count -->
 	<div class="mt-2 flex items-center justify-between">
 		<p class="text-xs text-muted" aria-live="polite">
-			Showing {filtered.length} of {totalCount || data.length} records
+			Showing {filtered.length} of {totalCount || data.length} {(totalCount || data.length) === 1 ? 'record' : 'records'}
 			{#if activeFilter !== 'All'} · Filtered: {activeFilter}{/if}
 			{#if searchQuery.trim()} · Search: "{searchQuery.trim()}"{/if}
 		</p>

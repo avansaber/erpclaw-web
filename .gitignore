@@ -7,5 +7,11 @@ __pycache__/
 *.pyc
 *.sqlite
 .env
+.env.local
+.env.production
 .DS_Store
 api/.venv/
+credentials.json
+*.pem
+*.key
+.auth/
