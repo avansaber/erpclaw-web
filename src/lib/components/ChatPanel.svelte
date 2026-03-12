@@ -25,6 +25,7 @@
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let messagesEl = $state<HTMLDivElement | null>(null);
 	let sending = $state(false);
+	let sessionId = $state<string | null>(null);
 
 	$effect(() => {
 		if (open) requestAnimationFrame(() => inputEl?.focus());
@@ -36,6 +37,24 @@
 		});
 	}
 
+	/**
+	 * Parse <composition>{...}</composition> blocks from AI response text.
+	 * Returns { text, composition } where composition is the parsed JSON or null.
+	 */
+	function parseComposition(
+		text: string
+	): { text: string; composition: Record<string, unknown> | null } {
+		const match = text.match(/<composition>([\s\S]*?)<\/composition>/);
+		if (!match) return { text, composition: null };
+		try {
+			const composition = JSON.parse(match[1]);
+			const cleanText = text.replace(/<composition>[\s\S]*?<\/composition>/, '').trim();
+			return { text: cleanText, composition };
+		} catch {
+			return { text, composition: null };
+		}
+	}
+
 	async function handleSend(text?: string) {
 		const q = (text ?? input).trim();
 		if (!q || sending) return;
@@ -45,37 +64,126 @@
 		sending = true;
 		scrollToBottom();
 
+		// Add a placeholder assistant message for streaming
+		const assistantIdx = messages.length;
+		messages.push({ role: 'assistant', content: '' });
+		scrollToBottom();
+
 		try {
-			const res = await auth.apiFetch('/api/chat', {
+			// Get auth token
+			let token: string | null = null;
+			auth.subscribe((s: { accessToken: string | null }) => (token = s.accessToken))();
+
+			const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+			if (token) headers['Authorization'] = `Bearer ${token}`;
+
+			const res = await fetch('/api/chat/stream', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message: q, vertical: 'erpclaw' })
+				headers,
+				credentials: 'include',
+				body: JSON.stringify({
+					message: q,
+					session_id: sessionId,
+					context: { skill: 'erpclaw', domain: 'ERP' }
+				})
 			});
 
-			const data = await res.json();
-
-			const msg: ChatMessage = {
-				role: 'assistant',
-				content: data.message ?? 'Something went wrong.',
-				href: data.href,
-				action: data.action,
-				suggestions: data.suggestions
-			};
-			messages.push(msg);
-			scrollToBottom();
-
-			// Auto-navigate after a short delay
-			if (data.type === 'navigate' && data.href) {
-				setTimeout(() => goto(data.href), 600);
+			if (res.status === 401) {
+				// Try refresh
+				const refreshed = await auth.refresh();
+				if (refreshed) {
+					auth.subscribe((s: { accessToken: string | null }) => (token = s.accessToken))();
+					headers['Authorization'] = `Bearer ${token}`;
+					const retryRes = await fetch('/api/chat/stream', {
+						method: 'POST',
+						headers,
+						credentials: 'include',
+						body: JSON.stringify({
+							message: q,
+							session_id: sessionId,
+							context: { skill: 'erpclaw', domain: 'ERP' }
+						})
+					});
+					await processSSE(retryRes, assistantIdx);
+				} else {
+					messages[assistantIdx].content = 'Session expired. Please log in again.';
+				}
+			} else if (!res.ok) {
+				messages[assistantIdx].content = `Error: ${res.status} ${res.statusText}`;
+			} else {
+				await processSSE(res, assistantIdx);
 			}
 		} catch {
-			messages.push({
-				role: 'assistant',
-				content: "Sorry, I couldn't reach the server. Try again in a moment."
-			});
-			scrollToBottom();
+			messages[assistantIdx].content =
+				"Sorry, I couldn't reach the server. Try again in a moment.";
 		} finally {
 			sending = false;
+			scrollToBottom();
+		}
+	}
+
+	async function processSSE(res: Response, msgIdx: number) {
+		const reader = res.body?.getReader();
+		if (!reader) {
+			messages[msgIdx].content = 'No response stream available.';
+			return;
+		}
+
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let fullText = '';
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+
+			// Process complete SSE lines
+			const lines = buffer.split('\n');
+			buffer = lines.pop() ?? ''; // Keep incomplete line in buffer
+
+			for (const line of lines) {
+				if (!line.startsWith('data: ')) continue;
+				const dataStr = line.slice(6).trim();
+				if (!dataStr) continue;
+
+				try {
+					const event = JSON.parse(dataStr);
+
+					if (event.type === 'delta' && event.text) {
+						fullText += event.text;
+						messages[msgIdx].content = fullText;
+						scrollToBottom();
+					} else if (event.type === 'done') {
+						if (event.session_id) sessionId = event.session_id;
+					}
+				} catch {
+					// Skip malformed SSE events
+				}
+			}
+		}
+
+		// Parse composition blocks from the final text
+		if (fullText) {
+			const { text: cleanText, composition } = parseComposition(fullText);
+			if (composition) {
+				messages[msgIdx].content = cleanText;
+				messages[msgIdx].action = {
+					skill: (composition.skill as string) || 'erpclaw',
+					action: (composition.action as string) || '',
+					params: Object.fromEntries(
+						((composition.resolved_fields as Array<{ field: string; value: unknown }>) || []).map(
+							(f) => [f.field, f.value]
+						)
+					)
+				};
+			}
+		}
+
+		// If response is still empty after streaming, set a fallback
+		if (!fullText) {
+			messages[msgIdx].content = 'No response received.';
 		}
 	}
 
@@ -115,6 +223,23 @@
 			open = false;
 		}
 	}
+
+	function handleNewChat() {
+		sessionId = null;
+		messages = [
+			{
+				role: 'assistant',
+				content:
+					"Hi! I can help you navigate, create records, query data, or execute actions. Try asking me something.",
+				suggestions: [
+					'Show me customers',
+					'How many overdue invoices?',
+					'New sales order',
+					'Total revenue this month'
+				]
+			}
+		];
+	}
 </script>
 
 {#if open}
@@ -127,16 +252,25 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between border-b border-border p-3">
 			<div class="flex items-center gap-2">
-				<span class="text-sm">💬</span>
 				<span class="text-sm font-medium">Assistant</span>
 			</div>
-			<button
-				class="cursor-pointer rounded-md p-1 text-xs text-muted hover:text-text"
-				onclick={() => (open = false)}
-				aria-label="Close chat"
-			>
-				✕
-			</button>
+			<div class="flex items-center gap-1">
+				<button
+					class="cursor-pointer rounded-md px-2 py-1 text-xs text-muted hover:text-text"
+					onclick={handleNewChat}
+					aria-label="New chat"
+					title="New chat"
+				>
+					+
+				</button>
+				<button
+					class="cursor-pointer rounded-md p-1 text-xs text-muted hover:text-text"
+					onclick={() => (open = false)}
+					aria-label="Close chat"
+				>
+					✕
+				</button>
+			</div>
 		</div>
 
 		<!-- Messages -->
@@ -201,7 +335,7 @@
 				{/if}
 			{/each}
 
-			{#if sending}
+			{#if sending && messages[messages.length - 1]?.content === ''}
 				<div class="flex justify-start">
 					<div class="rounded-lg bg-card px-3 py-2 text-sm text-muted">
 						Thinking...
