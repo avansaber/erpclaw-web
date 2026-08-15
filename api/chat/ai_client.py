@@ -19,8 +19,12 @@ OPENCLAW_GATEWAY_URL = os.environ.get(
 OPENCLAW_CHAT_ENDPOINT = f"{OPENCLAW_GATEWAY_URL}/v1/chat/completions"
 MAX_TOKENS = 4096
 
-# Path to OpenClaw config (for gateway auth token)
-OPENCLAW_CONFIG_PATH = os.path.expanduser("~/.openclaw/openclaw.json")
+# Path to gateway config (for auth token). De-OpenClaw: overridable via
+# FIDES_GATEWAY_CONFIG; the chat backend itself swaps to Hermes in Phase 3.
+OPENCLAW_CONFIG_PATH = os.environ.get(
+    "FIDES_GATEWAY_CONFIG",
+    os.path.expanduser("~/.openclaw/openclaw.json"),
+)
 
 _gateway_token: str | None = None
 

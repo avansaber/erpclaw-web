@@ -5,15 +5,16 @@ import sqlite3
 from pathlib import Path
 
 # Web app's own database (users, sessions, roles)
+# De-OpenClaw: no ~/.openclaw default. Paths resolve via ERPCLAW_HOME / explicit env.
 WEB_DB_PATH = os.environ.get(
     "ERPCLAW_WEB_DB",
-    os.path.expanduser("~/.openclaw/erpclaw-web/web.sqlite"),
+    "/data/erpclaw-web/web.sqlite",
 )
 
 # ERPClaw's data database (the actual ERP data)
 ERP_DB_PATH = os.environ.get(
     "ERPCLAW_DB",
-    os.path.expanduser("~/.openclaw/erpclaw/data.sqlite"),
+    os.path.join(os.environ.get("ERPCLAW_HOME", "/data/erpclaw"), "data.sqlite"),
 )
 
 

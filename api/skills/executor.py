@@ -9,10 +9,12 @@ from pathlib import Path
 
 # Where skills are installed
 SKILLS_DIR = os.path.expanduser("~/clawd/skills")
-MODULES_DIR = os.path.expanduser("~/.openclaw/erpclaw/modules")
-ERPCLAW_LIB = os.path.expanduser("~/.openclaw/erpclaw/lib")
-ERP_DB_PATH = os.path.expanduser("~/.openclaw/erpclaw/data.sqlite")
-WEB_DB_PATH = os.path.expanduser("~/.openclaw/erpclaw-web/web.sqlite")
+# De-OpenClaw: resolve all ERPClaw paths from ERPCLAW_HOME (no ~/.openclaw default).
+_ERPCLAW_HOME = os.environ.get("ERPCLAW_HOME", "/data/erpclaw")
+MODULES_DIR = os.path.join(_ERPCLAW_HOME, "modules")
+ERPCLAW_LIB = os.path.join(_ERPCLAW_HOME, "lib")
+ERP_DB_PATH = os.path.join(_ERPCLAW_HOME, "data.sqlite")
+WEB_DB_PATH = os.environ.get("ERPCLAW_WEB_DB", "/data/erpclaw-web/web.sqlite")
 
 # Timeout for action execution
 ACTION_TIMEOUT = 30  # seconds
